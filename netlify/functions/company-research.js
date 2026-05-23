@@ -161,13 +161,10 @@ export async function handler(event) {
     'recommendationMean', 'numberOfAnalystOpinions', 'averageAnalystRating',
   ].join(',');
 
-  const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(ticker)}&fields=${fields}`;
+  const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${ticker}&fields=${fields}`;
 
   try {
-    const res = await fetch(url, {
-      headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' },
-      signal: AbortSignal.timeout(8000),
-    });
+    const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
     if (!res.ok) throw new Error(`Yahoo HTTP ${res.status}`);
 
     const json = await res.json();
@@ -177,11 +174,8 @@ export async function handler(event) {
     // Optional: grab company description from quoteSummary (don't fail if unavailable)
     let description = '';
     try {
-      const sUrl = `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${encodeURIComponent(ticker)}?modules=assetProfile`;
-      const sRes = await fetch(sUrl, {
-        headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' },
-        signal: AbortSignal.timeout(4000),
-      });
+      const sUrl = `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${ticker}?modules=assetProfile`;
+      const sRes = await fetch(sUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
       if (sRes.ok) {
         const sJson = await sRes.json();
         const bio   = sJson?.quoteSummary?.result?.[0]?.assetProfile?.longBusinessSummary || '';
