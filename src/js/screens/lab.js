@@ -276,11 +276,26 @@ async function renderAddCompany() {
         }
       } catch { res.innerHTML = `<div class="ticker-result unknown" style="margin-top:8px">Could not search — enter ticker manually if you know it.</div>`; }
     };
-    window.__addStartResearch = () => {
+    window.__addStartResearch = async () => {
       const name   = document.getElementById('add-name').value.trim();
-      const ticker = document.getElementById('add-ticker').value.trim().toUpperCase();
+      let   ticker = document.getElementById('add-ticker').value.trim().toUpperCase();
       if (!name) { document.getElementById('add-name').style.borderColor = '#EF4444'; return; }
-      _addState.name   = name;
+      _addState.name = name;
+
+      // Auto-lookup ticker if not provided
+      if (!ticker && !_addState.ticker) {
+        const local = lookupTicker(name);
+        if (local?.ticker && !local?.private) {
+          ticker = local.ticker;
+        } else if (!local?.private) {
+          try {
+            const r    = await fetch(`/api/ticker-search?q=${encodeURIComponent(name)}`);
+            const data = await r.json();
+            if (data.found) ticker = data.ticker;
+          } catch { /* ignore, fall through to checklist */ }
+        }
+      }
+
       _addState.ticker = ticker || _addState.ticker;
       _addState.step   = 1;
       renderAddCompany();
