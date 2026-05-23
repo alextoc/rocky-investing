@@ -112,6 +112,7 @@ export function mountGame(session) {
   window.__gCap10Stock = (id) => pickCap10Stock(id);
   window.__gFinish     = ()  => finishCap10();
   window.__gAgain      = ()  => navigate('screen-home');
+  window.__gBonus      = (id) => renderBonusLesson(id);
 
   scrollTop();
 
@@ -128,6 +129,104 @@ export function mountGame(session) {
   else                  renderAllDone();
 }
 
+const BONUS_LESSONS = [
+  {
+    id: 'dividends',
+    emoji: '💰', title: 'What Are Dividends?',
+    teaser: 'Getting paid just for owning shares!',
+    content: `
+      <p>Imagine you own a tiny piece of a lemonade company. Every time the company makes a profit, they share some of that money with ALL the owners — including you! That shared money is called a <strong>dividend</strong>. 🍋</p>
+      <br>
+      <p><strong>How it works:</strong> If you own 10 shares of a company that pays $0.50 per share each year, you receive <strong>$5 every year</strong> — just for holding the shares. No work required!</p>
+      <br>
+      <p><strong>Dividend yield</strong> is the percentage you earn. A 4% yield means if you own $1,000 of shares, you get $40/year in dividends.</p>
+      <br>
+      <div style="background:#D1FAE5;border-radius:12px;padding:12px 15px;font-size:.85rem;color:#065F46;line-height:1.6">
+        <strong>🕷️ Rocky's tip:</strong> In Australia, many dividends come with <strong>franking credits</strong> — bonus tax credits the government gives you! This makes Australian dividends even more valuable for Aussie investors. Bunnings parent Wesfarmers and the big banks (CBA, NAB, ANZ) are famous dividend payers!
+      </div>`,
+  },
+  {
+    id: 'compound',
+    emoji: '🧮', title: 'The Magic of Compounding',
+    teaser: 'How $1,000 becomes $10,000 without you doing anything.',
+    content: `
+      <p>Here's the most powerful idea in all of investing. <strong>Compounding</strong> means earning returns on your returns.</p>
+      <br>
+      <p><strong>Example:</strong> You invest $1,000. It grows 10% in year 1 → you now have <strong>$1,100</strong>. In year 2, 10% of $1,100 = $110 → you have <strong>$1,210</strong>. In year 3, 10% of $1,210 = $121 → <strong>$1,331</strong>.</p>
+      <br>
+      <p>At first it looks small. But after 30 years at 10%/year, that $1,000 becomes <strong>$17,449</strong>! You added $16,449 without putting in a single extra dollar. 🤯</p>
+      <br>
+      <div style="background:#EEF2FF;border-radius:12px;padding:12px 15px;font-size:.85rem;color:#1E1B4B;line-height:1.6;margin-bottom:10px">
+        <strong>⏰ The rule of 72:</strong> Divide 72 by your annual return to find how many years to double your money. At 10%/year → 72 ÷ 10 = <strong>7.2 years to double</strong>!
+      </div>
+      <div style="background:#D1FAE5;border-radius:12px;padding:12px 15px;font-size:.85rem;color:#065F46;line-height:1.6">
+        <strong>🕷️ Rocky say:</strong> Starting at age 7 vs 27 is the difference between retiring rich and retiring okay. TIME is the secret ingredient. Start early, even with tiny amounts. The snowball effect is REAL!
+      </div>`,
+  },
+  {
+    id: 'news',
+    emoji: '📰', title: 'Reading Stock News',
+    teaser: 'How to not panic when headlines scream!',
+    content: `
+      <p>Every day the news says things like <em>"Markets crash!"</em> or <em>"Tech stocks plunge!"</em> or <em>"Recession fears grip Wall Street!"</em>. This is designed to make you panic. <strong>Don't panic.</strong></p>
+      <br>
+      <p><strong>What smart investors do with news:</strong></p>
+      <br>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px">
+        <div style="display:flex;gap:10px;padding:10px;background:#D1FAE5;border-radius:10px;font-size:.82rem;font-weight:700;color:#065F46"><span>✅</span><span>Ask: does this change the LONG TERM story of the company?</span></div>
+        <div style="display:flex;gap:10px;padding:10px;background:#D1FAE5;border-radius:10px;font-size:.82rem;font-weight:700;color:#065F46"><span>✅</span><span>A bad quarter doesn't mean a bad company. Zoom out!</span></div>
+        <div style="display:flex;gap:10px;padding:10px;background:#D1FAE5;border-radius:10px;font-size:.82rem;font-weight:700;color:#065F46"><span>✅</span><span>Market drops = SALE on shares. Great time to buy more!</span></div>
+        <div style="display:flex;gap:10px;padding:10px;background:#FEE2E2;border-radius:10px;font-size:.82rem;font-weight:700;color:#991B1B"><span>❌</span><span>Never sell because of scary headlines</span></div>
+        <div style="display:flex;gap:10px;padding:10px;background:#FEE2E2;border-radius:10px;font-size:.82rem;font-weight:700;color:#991B1B"><span>❌</span><span>Never buy something just because everyone is excited</span></div>
+      </div>
+      <div style="background:#FEF3C7;border-radius:12px;padding:12px 15px;font-size:.85rem;color:#92400E;line-height:1.6">
+        <strong>🕷️ Rocky say:</strong> Warren Buffett — most famous investor on Earth — says: "Be fearful when others are greedy, and greedy when others are fearful." When market crashes, Rocky say: HAPPY DANCE! Everything on sale!
+      </div>`,
+  },
+  {
+    id: 'markets',
+    emoji: '🌏', title: 'Australia vs USA Markets',
+    teaser: 'ASX vs S&P 500 — what's the difference?',
+    content: `
+      <p>Australia has its own stock market called the <strong>ASX (Australian Securities Exchange)</strong>. The USA has the <strong>NYSE and NASDAQ</strong>. They work the same way — companies list shares, investors buy and sell.</p>
+      <br>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+        <div style="padding:12px;background:#EEF2FF;border-radius:12px">
+          <div style="font-weight:900;font-size:.85rem;color:#4338CA;margin-bottom:8px">🇦🇺 ASX (Australia)</div>
+          <div style="font-size:.76rem;color:#374151;line-height:1.7">200 big companies<br>Banks &amp; miners dominate<br>Famous for dividends + franking<br>Trades 10am–4pm AEDT<br>Currency: AUD $</div>
+        </div>
+        <div style="padding:12px;background:#F0FDF4;border-radius:12px">
+          <div style="font-weight:900;font-size:.85rem;color:#059669;margin-bottom:8px">🇺🇸 S&amp;P 500 (USA)</div>
+          <div style="font-size:.76rem;color:#374151;line-height:1.7">500 biggest companies<br>Tech giants dominate<br>Apple, Google, Amazon<br>Trades overnight (AEDT)<br>Currency: USD $</div>
+        </div>
+      </div>
+      <div style="background:#D1FAE5;border-radius:12px;padding:12px 15px;font-size:.85rem;color:#065F46;line-height:1.6">
+        <strong>🕷️ Rocky's strategy:</strong> Smart Aussie investors often use <strong>VAS</strong> (Vanguard ASX 300) for Australian exposure and <strong>VGS</strong> (Vanguard Global) for international. You get the best of both worlds — Aussie dividends AND global tech growth!
+      </div>`,
+  },
+  {
+    id: 'mindset',
+    emoji: '🧠', title: 'The Investor Mindset',
+    teaser: 'The mental game is harder than the math.',
+    content: `
+      <p>Here's the secret most people don't know: investing knowledge is easy. The hard part is <strong>controlling your emotions</strong>.</p>
+      <br>
+      <p>When your shares go DOWN 20%, every feeling says "SELL!" But that's the worst thing you can do — you're locking in the loss and missing the recovery.</p>
+      <br>
+      <p>When your shares go UP and everyone is excited, every feeling says "BUY MORE!" But that's when things are most expensive and risky.</p>
+      <br>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px">
+        <div style="display:flex;gap:10px;padding:10px;background:#EEF2FF;border-radius:10px;font-size:.82rem;font-weight:700;color:#4338CA"><span>🧱</span><span><strong>Be boring.</strong> Boring investing beats exciting investing every time.</span></div>
+        <div style="display:flex;gap:10px;padding:10px;background:#EEF2FF;border-radius:10px;font-size:.82rem;font-weight:700;color:#4338CA"><span>📅</span><span><strong>Time in market</strong> beats timing the market. Stay invested.</span></div>
+        <div style="display:flex;gap:10px;padding:10px;background:#EEF2FF;border-radius:10px;font-size:.82rem;font-weight:700;color:#4338CA"><span>🎯</span><span><strong>Know WHY you own it.</strong> Good reason = easy to hold through dips.</span></div>
+        <div style="display:flex;gap:10px;padding:10px;background:#EEF2FF;border-radius:10px;font-size:.82rem;font-weight:700;color:#4338CA"><span>🤏</span><span><strong>Never invest money you might need soon.</strong> Emergency fund first!</span></div>
+      </div>
+      <div style="background:#FEF3C7;border-radius:12px;padding:12px 15px;font-size:.85rem;color:#92400E;line-height:1.6">
+        <strong>🕷️ Rocky say:</strong> Rocky have invested through many market crashes. Every single time, market came back higher than before. Every. Single. Time. The investors who panic and sell are the ones who lose. The ones who stay calm and hold — or buy more — always win. Be the calm one!
+      </div>`,
+  },
+];
+
 function renderAllDone() {
   gel().innerHTML = `
     <div class="badge-card">
@@ -135,12 +234,58 @@ function renderAllDone() {
       <div class="badge-title">Academy Complete!</div>
       <div class="badge-sub">${_session.username} has mastered all 10 chapters!</div>
     </div>
-    <div class="card" style="text-align:center;padding:24px">
-      <div style="font-size:.95rem;line-height:1.65;color:#374151;margin-bottom:16px">
-        🕷️ Rocky is very impress! You learn all 10 chapters of investing wisdom! Now is time to use knowledge in real world — build your real portfolio!
+    <div class="card">
+      <div class="tutor-row">
+        <div class="tutor-emoji">🕷️</div>
+        <div class="bubble">
+          <div class="bubble-tag">Rocky 🪨</div>
+          Rocky is SO impress!! ${_session.username} learn everything! But Rocky still have more wisdom to share… explore the bonus lessons below whenever you want!
+        </div>
       </div>
-      <button class="btn btn-primary btn-lg btn-full" onclick="window.__nav('screen-home')">Go to Portfolio Dashboard →</button>
+    </div>
+    <div class="card">
+      <div class="sec-title">📚 Rocky's Bonus Lessons</div>
+      <div class="sec-sub">Tap any topic to keep learning!</div>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px">
+        ${BONUS_LESSONS.map(l => `
+          <button onclick="window.__gBonus('${l.id}')" style="display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:14px;border:2px solid #E0E7FF;background:#F8FAFF;cursor:pointer;text-align:left;font-family:inherit;transition:all .18s;width:100%">
+            <span style="font-size:1.8rem;width:40px;text-align:center">${l.emoji}</span>
+            <div>
+              <div style="font-weight:900;font-size:.92rem;color:#1F2937">${l.title}</div>
+              <div style="font-size:.75rem;color:#6B7280;font-weight:600;margin-top:2px">${l.teaser}</div>
+            </div>
+            <span style="margin-left:auto;color:#C7D2FE;font-size:1rem">›</span>
+          </button>
+        `).join('')}
+      </div>
+    </div>
+    <div class="card" style="text-align:center;padding:20px">
+      <div style="font-size:.85rem;color:#6B7280;margin-bottom:12px">Ready to put it all into practice?</div>
+      <button class="btn btn-primary btn-lg btn-full" onclick="window.__nav('screen-home')">Go to My Dashboard →</button>
     </div>`;
+}
+
+function renderBonusLesson(id) {
+  const lesson = BONUS_LESSONS.find(l => l.id === id);
+  if (!lesson) return;
+  gel().innerHTML = `
+    <div class="card">
+      <div class="tutor-row">
+        <div class="tutor-emoji">🕷️</div>
+        <div class="bubble">
+          <div class="bubble-tag">Rocky 🪨 — Bonus Lesson</div>
+          ${lesson.emoji} <strong>${lesson.title}</strong>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div style="font-size:.92rem;line-height:1.75;color:#374151">
+        ${lesson.content}
+      </div>
+    </div>
+    <button class="btn btn-outline btn-full" onclick="window.__gAgain2()">← Back to Bonus Lessons</button>`;
+  window.__gAgain2 = () => renderAllDone();
+  scrollTop();
 }
 
 // ── CHAPTER 1: WHAT IS A COMPANY ──────────────────────────────────────────────

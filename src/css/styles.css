@@ -26,7 +26,7 @@ body {
   display: none; position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
   width: 100%; max-width: 840px; background: white;
   border-top: 2px solid #E0E7FF; padding: 6px 12px;
-  grid-template-columns: repeat(5,1fr); gap: 4px; z-index: 200;
+  grid-template-columns: repeat(5,1fr) auto; gap: 4px; z-index: 200;
 }
 .nav.show { display: grid; }
 .nav-btn {
@@ -39,6 +39,7 @@ body {
 .nav-btn.on { background: #EEF2FF; }
 .nav-btn.on span:last-child { color: var(--primary); }
 .nav-btn:hover:not(.on) { background: #F8FAFF; }
+.nav-profile { border-left: 2px solid #E0E7FF; padding-left: 10px; min-width: 48px; }
 
 /* ── HUD ──────────────────────────────────────────────────────────────────── */
 .hud {

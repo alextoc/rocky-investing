@@ -47,7 +47,11 @@ export function buildNav(session) {
       <span>${item.icon}</span>
       <span>${item.label}</span>
     </button>
-  `).join('');
+  `).join('') + `
+    <button class="nav-btn nav-profile" onclick="window.__switchProfile()" title="Switch profile">
+      <span style="font-size:1.3rem;line-height:1">${session.avatarEmoji}</span>
+      <span>Switch</span>
+    </button>`;
   navBar.classList.add('show');
   // Expose globally so inline onclick works
   window.__nav = navigate;

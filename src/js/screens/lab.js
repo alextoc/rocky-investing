@@ -272,50 +272,151 @@ function renderAddCompany() {
     };
 
   } else if (_addState.step === 1) {
-    // STEP 1: All-at-once research checklist
+    // STEP 1: Fetch real data from Yahoo Finance and display 5 research points
     el.innerHTML = `
       <div class="card">
         <div class="tutor-row">
           <div class="tutor-emoji">🕷️</div>
           <div class="bubble">
             <div class="bubble-tag">Rocky 🪨</div>
-            Rocky is investigating <strong>${_addState.name}</strong>! 🔬 Rocky has <strong>5 clues</strong> to check. For each one — tap ✅ Yes or ❌ No. Then Rocky gives the verdict!
+            Rocky is researching <strong>${_addState.name}</strong>… give Rocky one moment! 🔬
           </div>
         </div>
       </div>
-      <div class="card">
-        ${ADD_Q.map((q, i) => `
-          <div class="research-q" data-qi="${i}" style="margin-bottom:12px;padding:14px;border-radius:14px;border:2px solid #E0E7FF;background:#F8FAFF;transition:all .2s">
-            <div style="font-size:.88rem;font-weight:900;color:#1F2937;margin-bottom:3px">${i+1}. ${q.q}</div>
-            <div style="font-size:.75rem;color:#6B7280;font-weight:600;margin-bottom:10px">💡 ${q.hint}</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-              <button class="yes-btn" onclick="window.__addSetAnswer(${i},true)" style="padding:9px;border-radius:10px;border:2px solid #E0E7FF;background:white;font-size:.88rem;font-weight:800;cursor:pointer;font-family:inherit;transition:all .15s">✅ Yes!</button>
-              <button class="no-btn"  onclick="window.__addSetAnswer(${i},false)" style="padding:9px;border-radius:10px;border:2px solid #E0E7FF;background:white;font-size:.88rem;font-weight:800;cursor:pointer;font-family:inherit;transition:all .15s">❌ No</button>
-            </div>
-            <div class="q-feedback" style="display:none;margin-top:8px;font-size:.78rem;font-weight:700;padding:6px 10px;border-radius:8px"></div>
-          </div>
-        `).join('')}
-        <div id="research-err" style="color:var(--red);font-size:.82rem;font-weight:800;min-height:20px;text-align:center;margin:4px 0 10px"></div>
-        <button class="btn btn-primary btn-lg btn-full" onclick="window.__addFinishResearch()">🕷️ Get Rocky's Verdict! →</button>
-        <button class="btn btn-outline btn-full" style="margin-top:8px" onclick="window.__addBackToInfo()">← Back</button>
+      <div class="card" style="text-align:center;padding:32px">
+        <div class="spinner" style="margin:0 auto 12px"></div>
+        <div style="font-size:.88rem;color:#6B7280;font-weight:800">Fetching real data…</div>
       </div>`;
 
-    // Restore any already-answered states (back-navigation)
-    _addState.answers.forEach((ans, i) => { if (ans !== null) applyAnswer(i, ans); });
+    let resData = null;
+    if (_addState.ticker && _addState.ticker !== '—') {
+      try {
+        const r = await fetch('/api/company-research', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ticker: _addState.ticker, name: _addState.name }),
+        });
+        resData = await r.json();
+      } catch { /* fall through to checklist */ }
+    }
 
-    window.__addSetAnswer = (i, val) => {
-      _addState.answers[i] = val;
-      applyAnswer(i, val);
-      document.getElementById('research-err').textContent = '';
-    };
-    window.__addFinishResearch = () => {
-      if (_addState.answers.some(a => a === null)) {
-        document.getElementById('research-err').textContent = '❌ Please answer all 5 clues first!';
-        return;
-      }
-      _addState.step = 2;
-      renderAddCompany();
-    };
+    if (resData && !resData.fallback && resData.points) {
+      // ── REAL DATA VIEW ────────────────────────────────────────────────────
+      const GRADE_STYLE = {
+        green:  { border: '#10B981', bg: '#D1FAE5', dot: '🟢' },
+        yellow: { border: '#F59E0B', bg: '#FEF3C7', dot: '🟡' },
+        red:    { border: '#EF4444', bg: '#FEE2E2', dot: '🔴' },
+        info:   { border: '#C7D2FE', bg: '#EEF2FF', dot: '🔵' },
+      };
+      const greenCount = resData.greenCount ?? 0;
+      const verdicts = {
+        5: 'Amaze amaze amaze!! Five green signals — rocky say this is very strong! Highly recommend watchlist!',
+        4: 'Blurt! Four green signals — very solid company! Rocky is impress. Worth watching closely.',
+        3: 'Three green, some yellow/red. Decent company but do more research before investing.',
+        2: 'Only two greens. Rocky is cautious — some concerning signals. Watch and wait.',
+        1: 'One green signal. Rocky say: high risk right now. Maybe look for better opportunity.',
+        0: 'No strong green signals from data. Rocky say: research more before deciding!',
+      };
+      el.innerHTML = `
+        <div class="card">
+          <div class="tutor-row">
+            <div class="tutor-emoji">🕷️</div>
+            <div class="bubble">
+              <div class="bubble-tag">Rocky 🪨</div>
+              Rocky found real data for <strong>${resData.companyName || _addState.name}</strong>! Here are 5 important facts. Read each one and decide — is this a good investment?
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          ${resData.points.map(p => {
+            const s = GRADE_STYLE[p.grade] || GRADE_STYLE.info;
+            return `
+            <div style="margin-bottom:12px;padding:14px;border-radius:14px;border:2px solid ${s.border};background:${s.bg}">
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+                <span style="font-size:1.3rem">${p.emoji}</span>
+                <div style="font-weight:900;font-size:.9rem;color:#1F2937;flex:1">${p.title}</div>
+                <span>${s.dot}</span>
+              </div>
+              <div style="font-size:.78rem;font-weight:700;color:#374151;margin-bottom:5px">${p.detail}</div>
+              <div style="font-size:.75rem;color:#4B5563;font-weight:600;padding:6px 10px;background:rgba(255,255,255,.6);border-radius:8px">🕷️ ${p.rocky}</div>
+            </div>`;
+          }).join('')}
+          <div style="margin:14px 0 10px;padding:14px;background:#F8FAFF;border-radius:14px;border:2px solid #C7D2FE;text-align:center">
+            <div style="font-size:.78rem;font-weight:800;color:#6B7280;margin-bottom:4px">Rocky's Signal Score</div>
+            <div style="font-size:1.4rem;margin-bottom:4px">${'🟢'.repeat(greenCount)}${'⚪'.repeat(5-greenCount)}</div>
+            <div style="font-size:.82rem;font-weight:700;color:#374151">${verdicts[greenCount] || verdicts[0]}</div>
+          </div>
+          <button class="btn btn-green btn-lg btn-full" onclick="window.__addSaveData()">💾 Save to My Lab + Watchlist!</button>
+          <button class="btn btn-outline btn-full" style="margin-top:8px" onclick="window.__addBackToInfo()">← Back</button>
+        </div>`;
+
+      window.__addSaveData = async () => {
+        const clues = resData.points.map(p => ({ t: `${p.title}: ${p.rocky}`, g: p.grade === 'green' }));
+        const score  = greenCount;
+        const rating = score >= 4 ? 5 : score >= 3 ? 4 : score >= 2 ? 3 : score >= 1 ? 2 : 1;
+        const newCo  = {
+          id: 'custom_' + Date.now(), name: _addState.name,
+          ticker: _addState.ticker || '—', emoji: _addState.emoji,
+          col:'#6B7280', bg:'#F8FAFF', cat:'custom', sector:'other',
+          tag:`Researched by ${_session.username}!`,
+          intro:`${resData.companyName || _addState.name} — real data research by ${_session.username}.`,
+          clues, verdict: verdicts[score] || verdicts[0], rating, unlock_chapter: 0,
+        };
+        _custom.push(newCo);
+        _session.customCompanies = _custom;
+        await import('../db.js').then(m => m.saveProgress(_session.profileId, { stars: _session.stars, chaptersDone: _session.chaptersDone, customCompanies: _custom }));
+        if (newCo.ticker && newCo.ticker !== '—') {
+          await addToWatchlist(_session.profileId, { ticker: newCo.ticker, name: newCo.name, emoji: newCo.emoji, sector: 'other' });
+        }
+        toast(`🕷️ ${newCo.name} saved to Research Lab!`);
+        _labCat = 'custom';
+        doRenderLab();
+      };
+
+    } else {
+      // ── FALLBACK: checklist for private / no-ticker companies ─────────────
+      el.innerHTML = `
+        <div class="card">
+          <div class="tutor-row">
+            <div class="tutor-emoji">🕷️</div>
+            <div class="bubble">
+              <div class="bubble-tag">Rocky 🪨</div>
+              ${_addState.ticker ? `Rocky couldn't find live data for <strong>${_addState.name}</strong> — maybe private company!` : `<strong>${_addState.name}</strong> has no ticker yet.`} No worry — Rocky has 5 questions. You and parent investigate together! 🔍
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          ${ADD_Q.map((q, i) => `
+            <div class="research-q" data-qi="${i}" style="margin-bottom:12px;padding:14px;border-radius:14px;border:2px solid #E0E7FF;background:#F8FAFF;transition:all .2s">
+              <div style="font-size:.88rem;font-weight:900;color:#1F2937;margin-bottom:3px">${i+1}. ${q.q}</div>
+              <div style="font-size:.75rem;color:#6B7280;font-weight:600;margin-bottom:10px">💡 ${q.hint}</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                <button class="yes-btn" onclick="window.__addSetAnswer(${i},true)" style="padding:9px;border-radius:10px;border:2px solid #E0E7FF;background:white;font-size:.88rem;font-weight:800;cursor:pointer;font-family:inherit;transition:all .15s">✅ Yes!</button>
+                <button class="no-btn"  onclick="window.__addSetAnswer(${i},false)" style="padding:9px;border-radius:10px;border:2px solid #E0E7FF;background:white;font-size:.88rem;font-weight:800;cursor:pointer;font-family:inherit;transition:all .15s">❌ No</button>
+              </div>
+              <div class="q-feedback" style="display:none;margin-top:8px;font-size:.78rem;font-weight:700;padding:6px 10px;border-radius:8px"></div>
+            </div>
+          `).join('')}
+          <div id="research-err" style="color:var(--red);font-size:.82rem;font-weight:800;min-height:20px;text-align:center;margin:4px 0 10px"></div>
+          <button class="btn btn-primary btn-lg btn-full" onclick="window.__addFinishResearch()">🕷️ Get Rocky's Verdict! →</button>
+          <button class="btn btn-outline btn-full" style="margin-top:8px" onclick="window.__addBackToInfo()">← Back</button>
+        </div>`;
+
+      _addState.answers.forEach((ans, i) => { if (ans !== null) applyAnswer(i, ans); });
+      window.__addSetAnswer = (i, val) => {
+        _addState.answers[i] = val;
+        applyAnswer(i, val);
+        document.getElementById('research-err').textContent = '';
+      };
+      window.__addFinishResearch = () => {
+        if (_addState.answers.some(a => a === null)) {
+          document.getElementById('research-err').textContent = '❌ Please answer all 5 clues first!';
+          return;
+        }
+        _addState.step = 2;
+        renderAddCompany();
+      };
+    }
     window.__addBackToInfo = () => { _addState.step = 0; renderAddCompany(); };
 
   } else {
