@@ -12,11 +12,26 @@ let _custom    = [];
 let _addState  = null;
 
 const ADD_Q = [
-  { q:'Does your family actually USE this company?',     yes:'You and your family use and trust it 💙',          no:"You don't actually use this company yourself 🤔" },
-  { q:'Do LOTS of people you know use it?',             yes:'Very popular — lots of people love it ❤️',         no:'Not many people around you use it yet 🤏' },
-  { q:'Is it GROWING bigger and more popular?',         yes:'Growing bigger and more popular every year 📈',    no:'Not growing much right now 🐢' },
-  { q:'Do people NEED it, or just want it?',            yes:'People genuinely NEED it — essential! ⚡',         no:'Nice to have, but not a real necessity 🛍️' },
-  { q:'Is it HARD for competitors to copy or beat?',    yes:'Strong moat — hard to replace! 🏰',               no:'Competitors could probably copy or beat it 😬' },
+  { q:'Does your family actually USE this company?',
+    hint:'Does anyone at home buy from them, use their app, or visit their store?',
+    yes:'You and your family use and trust it 💙',
+    no:"You don't actually use this company yourself 🤔" },
+  { q:'Do LOTS of people you know use it?',
+    hint:'Think about friends, school, your neighbourhood — is it popular with many people?',
+    yes:'Very popular — lots of people love it ❤️',
+    no:'Not many people around you use it yet 🤏' },
+  { q:'Is it GROWING bigger and more popular?',
+    hint:'Has it gotten bigger in the last few years? More stores, more users, more products?',
+    yes:'Growing bigger and more popular every year 📈',
+    no:'Not growing much right now 🐢' },
+  { q:'Do people NEED it, or just want it?',
+    hint:'Would people still buy it even if money was tight? Is it essential?',
+    yes:'People genuinely NEED it — essential! ⚡',
+    no:'Nice to have, but not a real necessity 🛍️' },
+  { q:'Is it HARD for competitors to copy or beat?',
+    hint:'Is there something special — a brand, a habit, a patent — that makes it hard to replace?',
+    yes:'Strong moat — hard to replace! 🏰',
+    no:'Competitors could probably copy or beat it 😬' },
 ];
 const ADD_EMOJIS = ['🏢','🍕','🏪','🎮','🚗','🍦','⚽','🎬','🏥','👗','📱','🎨','🏠','🍜','✈️','🎸'];
 
@@ -112,7 +127,7 @@ function doRenderLab() {
     }
     doRenderLab();
   };
-  window.__goAddCompany = () => { _addState = { step:0, name:'', ticker:'', emoji:'🏢', answers:[] }; renderAddCompany(); };
+  window.__goAddCompany = () => { _addState = { step:0, name:'', ticker:'', emoji:'🏢', answers: Array(ADD_Q.length).fill(null) }; renderAddCompany(); };
   window.__deleteCustom = id => {
     _custom = _custom.filter(c => c.id !== id);
     _session.customCompanies = _custom;
@@ -176,13 +191,14 @@ function renderAddCompany() {
   if (!_addState) return;
 
   if (_addState.step === 0) {
+    // STEP 0: Company info entry
     el.innerHTML = `
       <div class="card">
         <div class="tutor-row">
           <div class="tutor-emoji">🕷️</div>
           <div class="bubble">
             <div class="bubble-tag">Rocky 🪨</div>
-            Blurt! ${_session.username} want to research own company?! Rocky is VERY excite! Tell Rocky — what company you thinking about? Rocky ask five questions and give verdict!
+            Blurt! ${_session.username} want to research own company?! Rocky is VERY excite! Tell Rocky — what company you thinking about? Rocky investigate and give verdict!
           </div>
         </div>
       </div>
@@ -190,12 +206,12 @@ function renderAddCompany() {
         <div class="sec-title">🔍 What Company?</div>
         <div style="margin-bottom:14px">
           <label style="font-size:.82rem;font-weight:800;color:#6B7280;display:block;margin-bottom:6px">Company Name *</label>
-          <input id="add-name" class="name-inp" style="text-align:left;font-size:.95rem" type="text" placeholder="e.g. Lego, Spotify, Bunnings…" maxlength="40" value="${_addState.name}" oninput="_addState.name=this.value"/>
+          <input id="add-name" class="name-inp" style="text-align:left;font-size:.95rem" type="text" placeholder="e.g. Lego, Spotify, Bunnings…" maxlength="40" value="${_addState.name}"/>
         </div>
         <div style="margin-bottom:14px">
           <label style="font-size:.82rem;font-weight:800;color:#6B7280;display:block;margin-bottom:6px">Ticker (Rocky will try to find it!)</label>
           <div style="display:flex;gap:8px">
-            <input id="add-ticker" class="name-inp" style="text-align:left;font-size:.95rem" type="text" placeholder="Leave blank — Rocky will look it up!" maxlength="12" value="${_addState.ticker}" oninput="_addState.ticker=this.value.toUpperCase()"/>
+            <input id="add-ticker" class="name-inp" style="text-align:left;font-size:.95rem" type="text" placeholder="Leave blank — Rocky will look it up!" maxlength="12" value="${_addState.ticker}"/>
             <button class="btn btn-primary btn-sm" onclick="window.__addFindTicker()" style="white-space:nowrap">🔍 Find</button>
           </div>
           <div id="add-ticker-result"></div>
@@ -203,15 +219,22 @@ function renderAddCompany() {
         <div>
           <label style="font-size:.82rem;font-weight:800;color:#6B7280;display:block;margin-bottom:8px">Pick an emoji</label>
           <div style="display:flex;flex-wrap:wrap;gap:7px">
-            ${ADD_EMOJIS.map(e => `<button onclick="_addState.emoji='${e}';document.querySelectorAll('.add-emoji-btn').forEach(b=>b.style.borderColor=b.dataset.e==='${e}'?'var(--primary)':'#E0E7FF');this.style.borderColor='var(--primary)'" class="add-emoji-btn" data-e="${e}" style="width:42px;height:42px;border-radius:10px;border:2.5px solid ${_addState.emoji===e?'var(--primary)':'#E0E7FF'};background:${_addState.emoji===e?'#EEF2FF':'white'};font-size:1.4rem;cursor:pointer">${e}</button>`).join('')}
+            ${ADD_EMOJIS.map((e,i) => `<button onclick="window.__addPickEmoji(${i})" class="add-emoji-btn" data-i="${i}" style="width:42px;height:42px;border-radius:10px;border:2.5px solid ${_addState.emoji===e?'var(--primary)':'#E0E7FF'};background:${_addState.emoji===e?'#EEF2FF':'white'};font-size:1.4rem;cursor:pointer">${e}</button>`).join('')}
           </div>
         </div>
       </div>
-      <button class="btn btn-primary btn-lg btn-full" onclick="window.__addStartInterview()">🕷️ Start Rocky's Interview →</button>
-      <button class="btn btn-outline btn-full" onclick="doRenderLab()">← Back to Research Lab</button>`;
+      <button class="btn btn-primary btn-lg btn-full" onclick="window.__addStartResearch()">🔬 Research This Company →</button>
+      <button class="btn btn-outline btn-full" style="margin-top:8px" onclick="doRenderLab()">← Back to Research Lab</button>`;
 
+    window.__addPickEmoji = i => {
+      _addState.emoji = ADD_EMOJIS[i];
+      document.querySelectorAll('.add-emoji-btn').forEach((b, j) => {
+        b.style.borderColor = j===i ? 'var(--primary)' : '#E0E7FF';
+        b.style.background  = j===i ? '#EEF2FF' : 'white';
+      });
+    };
     window.__addFindTicker = async () => {
-      const name = document.getElementById('add-name').value.trim() || _addState.ticker;
+      const name = document.getElementById('add-name').value.trim();
       if (!name) return;
       const res = document.getElementById('add-ticker-result');
       const local = lookupTicker(name);
@@ -227,7 +250,7 @@ function renderAddCompany() {
         return;
       }
       try {
-        const r   = await fetch(`/api/ticker-search?q=${encodeURIComponent(name)}`);
+        const r    = await fetch(`/api/ticker-search?q=${encodeURIComponent(name)}`);
         const data = await r.json();
         if (data.found) {
           _addState.ticker = data.ticker;
@@ -238,46 +261,67 @@ function renderAddCompany() {
         }
       } catch { res.innerHTML = `<div class="ticker-result unknown" style="margin-top:8px">Could not search — enter ticker manually if you know it.</div>`; }
     };
-    window.__addStartInterview = () => {
-      const name = (document.getElementById('add-name').value || _addState.name).trim();
+    window.__addStartResearch = () => {
+      const name   = document.getElementById('add-name').value.trim();
+      const ticker = document.getElementById('add-ticker').value.trim().toUpperCase();
       if (!name) { document.getElementById('add-name').style.borderColor = '#EF4444'; return; }
-      _addState.name = name; _addState.step = 1;
+      _addState.name   = name;
+      _addState.ticker = ticker || _addState.ticker;
+      _addState.step   = 1;
       renderAddCompany();
     };
 
-  } else if (_addState.step <= ADD_Q.length) {
-    const q   = ADD_Q[_addState.step - 1];
-    const pct = Math.round((_addState.step-1) / ADD_Q.length * 100);
+  } else if (_addState.step === 1) {
+    // STEP 1: All-at-once research checklist
     el.innerHTML = `
       <div class="card">
         <div class="tutor-row">
           <div class="tutor-emoji">🕷️</div>
           <div class="bubble">
-            <div class="bubble-tag">Rocky 🪨 — Question ${_addState.step} of ${ADD_Q.length}</div>
-            Rocky investigating <strong>${_addState.name}</strong>!<br><br><strong>${q.q}</strong>
+            <div class="bubble-tag">Rocky 🪨</div>
+            Rocky is investigating <strong>${_addState.name}</strong>! 🔬 Rocky has <strong>5 clues</strong> to check. For each one — tap ✅ Yes or ❌ No. Then Rocky gives the verdict!
           </div>
         </div>
       </div>
       <div class="card">
-        <div style="height:8px;background:#E0E7FF;border-radius:8px;overflow:hidden;margin-bottom:18px">
-          <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--primary),var(--purple));border-radius:8px;transition:width .5s"></div>
-        </div>
-        ${_addState.answers.length > 0 ? `
-        <div style="font-size:.78rem;font-weight:800;color:#9CA3AF;margin-bottom:8px">Rocky's notes so far:</div>
-        <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:18px">
-          ${_addState.answers.map((a,i)=>`<div style="display:flex;gap:7px;align-items:flex-start;padding:7px 10px;border-radius:8px;font-size:.78rem;font-weight:700;background:${a?'#D1FAE5':'#FEE2E2'};color:${a?'#065F46':'#991B1B'}"><span>${a?'✅':'❌'}</span><span>${a?ADD_Q[i].yes:ADD_Q[i].no}</span></div>`).join('')}
-        </div>` : ''}
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:13px">
-          <button class="btn btn-green btn-lg" onclick="window.__addAns(true)">✅ Yes!</button>
-          <button class="btn btn-lg" onclick="window.__addAns(false)" style="background:white;color:#DC2626;border:2.5px solid #DC2626;font-family:inherit;font-weight:800;font-size:1rem;border-radius:12px;cursor:pointer">❌ No</button>
-        </div>
+        ${ADD_Q.map((q, i) => `
+          <div class="research-q" data-qi="${i}" style="margin-bottom:12px;padding:14px;border-radius:14px;border:2px solid #E0E7FF;background:#F8FAFF;transition:all .2s">
+            <div style="font-size:.88rem;font-weight:900;color:#1F2937;margin-bottom:3px">${i+1}. ${q.q}</div>
+            <div style="font-size:.75rem;color:#6B7280;font-weight:600;margin-bottom:10px">💡 ${q.hint}</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <button class="yes-btn" onclick="window.__addSetAnswer(${i},true)" style="padding:9px;border-radius:10px;border:2px solid #E0E7FF;background:white;font-size:.88rem;font-weight:800;cursor:pointer;font-family:inherit;transition:all .15s">✅ Yes!</button>
+              <button class="no-btn"  onclick="window.__addSetAnswer(${i},false)" style="padding:9px;border-radius:10px;border:2px solid #E0E7FF;background:white;font-size:.88rem;font-weight:800;cursor:pointer;font-family:inherit;transition:all .15s">❌ No</button>
+            </div>
+            <div class="q-feedback" style="display:none;margin-top:8px;font-size:.78rem;font-weight:700;padding:6px 10px;border-radius:8px"></div>
+          </div>
+        `).join('')}
+        <div id="research-err" style="color:var(--red);font-size:.82rem;font-weight:800;min-height:20px;text-align:center;margin:4px 0 10px"></div>
+        <button class="btn btn-primary btn-lg btn-full" onclick="window.__addFinishResearch()">🕷️ Get Rocky's Verdict! →</button>
+        <button class="btn btn-outline btn-full" style="margin-top:8px" onclick="window.__addBackToInfo()">← Back</button>
       </div>`;
-    window.__addAns = yes => { _addState.answers.push(yes); _addState.step++; renderAddCompany(); };
+
+    // Restore any already-answered states (back-navigation)
+    _addState.answers.forEach((ans, i) => { if (ans !== null) applyAnswer(i, ans); });
+
+    window.__addSetAnswer = (i, val) => {
+      _addState.answers[i] = val;
+      applyAnswer(i, val);
+      document.getElementById('research-err').textContent = '';
+    };
+    window.__addFinishResearch = () => {
+      if (_addState.answers.some(a => a === null)) {
+        document.getElementById('research-err').textContent = '❌ Please answer all 5 clues first!';
+        return;
+      }
+      _addState.step = 2;
+      renderAddCompany();
+    };
+    window.__addBackToInfo = () => { _addState.step = 0; renderAddCompany(); };
 
   } else {
-    // Results
+    // STEP 2: Verdict
     const score  = _addState.answers.filter(Boolean).length;
-    const clues  = ADD_Q.map((q,i) => ({ t: _addState.answers[i] ? q.yes : q.no, g: _addState.answers[i] }));
+    const clues  = ADD_Q.map((q, i) => ({ t: _addState.answers[i] ? q.yes : q.no, g: _addState.answers[i] }));
     const rating = score>=5?5:score>=4?4:score>=3?3:score>=2?2:1;
     const verdicts = {
       5:`Amaze amaze amaze!! ${_addState.name} is extraordinary — all five green clues! Rocky say: add to watchlist right now!`,
@@ -318,7 +362,7 @@ function renderAddCompany() {
         id: 'custom_' + Date.now(), name: _addState.name, ticker: _addState.ticker || '—',
         emoji: _addState.emoji, col:'#6B7280', bg:'#F8FAFF', cat:'custom', sector:'other',
         tag:`Researched by ${_session.username}!`,
-        intro:`${_addState.name} was researched by ${_session.username} using Rocky's five-question method.`,
+        intro:`${_addState.name} was researched by ${_session.username} using Rocky's 5-clue method.`,
         clues, verdict: verdicts[score]||verdicts[1], rating, unlock_chapter: 0,
       };
       _custom.push(newCo);
@@ -332,4 +376,24 @@ function renderAddCompany() {
       doRenderLab();
     };
   }
+}
+
+function applyAnswer(i, val) {
+  const card = document.querySelector(`.research-q[data-qi="${i}"]`);
+  if (!card) return;
+  card.style.borderColor = val ? '#10B981' : '#EF4444';
+  card.style.background  = val ? '#D1FAE5' : '#FEE2E2';
+  const yesBtn = card.querySelector('.yes-btn');
+  const noBtn  = card.querySelector('.no-btn');
+  yesBtn.style.background  = val ? '#10B981' : 'white';
+  yesBtn.style.color       = val ? 'white'   : '';
+  yesBtn.style.borderColor = val ? '#10B981' : '#E0E7FF';
+  noBtn.style.background   = val ? 'white'   : '#EF4444';
+  noBtn.style.color        = val ? ''        : 'white';
+  noBtn.style.borderColor  = val ? '#E0E7FF' : '#EF4444';
+  const fb = card.querySelector('.q-feedback');
+  fb.style.display    = 'block';
+  fb.textContent      = val ? ADD_Q[i].yes : ADD_Q[i].no;
+  fb.style.background = val ? '#A7F3D0' : '#FECACA';
+  fb.style.color      = val ? '#065F46' : '#991B1B';
 }
