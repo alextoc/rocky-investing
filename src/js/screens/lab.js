@@ -282,18 +282,30 @@ async function renderAddCompany() {
       if (!name) { document.getElementById('add-name').style.borderColor = '#EF4444'; return; }
       _addState.name = name;
 
-      // Auto-lookup ticker if not provided
+      // Auto-lookup ticker if not already found
       if (!ticker && !_addState.ticker) {
         const local = lookupTicker(name);
-        if (local?.ticker && !local?.private) {
+        if (local?.private) {
+          document.getElementById('add-ticker-result').innerHTML =
+            `<div class="ticker-result private" style="margin-top:8px">⚠️ <strong>${name}</strong> is a private company — you can't buy shares yet. Rocky only researches companies listed on the stock market!</div>`;
+          return;
+        }
+        if (local?.ticker) {
           ticker = local.ticker;
-        } else if (!local?.private) {
+        } else {
           try {
             const r    = await fetch(`/api/ticker-search?q=${encodeURIComponent(name)}`);
             const data = await r.json();
             if (data.found) ticker = data.ticker;
-          } catch { /* ignore, fall through to checklist */ }
+          } catch { /* ignore */ }
         }
+      }
+
+      // Block if still no ticker — company is not publicly listed
+      if (!ticker && !_addState.ticker) {
+        document.getElementById('add-ticker-result').innerHTML =
+          `<div class="ticker-result private" style="margin-top:8px">🤔 Rocky couldn't find <strong>${name}</strong> on the stock market. Only listed companies can be researched. Try entering the ticker manually if you know it — or search a different company!</div>`;
+        return;
       }
 
       _addState.ticker = ticker || _addState.ticker;
@@ -404,49 +416,26 @@ async function renderAddCompany() {
       };
 
     } else {
-      // ── FALLBACK: checklist for private / no-ticker companies ─────────────
+      // ── FALLBACK: live data unavailable (API error) ───────────────────────
       el.innerHTML = `
         <div class="card">
           <div class="tutor-row">
             <div class="tutor-emoji">🕷️</div>
             <div class="bubble">
               <div class="bubble-tag">Rocky 🪨</div>
-              Rocky is investigating <strong>${_addState.name}</strong>! 🔍 Answer each question with what you know — if you're not sure, just tap <strong>🤷 Not Sure</strong> and Rocky will still give a verdict!
+              Rocky tried to get live data for <strong>${_addState.name}</strong> (${_addState.ticker}) but the market data is not available right now. Try again in a moment!
             </div>
           </div>
         </div>
-        <div class="card">
-          ${ADD_Q.map((q, i) => `
-            <div class="research-q" data-qi="${i}" style="margin-bottom:12px;padding:14px;border-radius:14px;border:2px solid #E0E7FF;background:#F8FAFF;transition:all .2s">
-              <div style="font-size:.88rem;font-weight:900;color:#1F2937;margin-bottom:3px">${i+1}. ${q.q}</div>
-              <div style="font-size:.75rem;color:#6B7280;font-weight:600;margin-bottom:10px">💡 ${q.hint}</div>
-              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
-                <button class="yes-btn" onclick="window.__addSetAnswer(${i},'yes')" style="padding:8px 4px;border-radius:10px;border:2px solid #E0E7FF;background:white;font-size:.78rem;font-weight:800;cursor:pointer;font-family:inherit;transition:all .15s">✅ Yes!</button>
-                <button class="no-btn"  onclick="window.__addSetAnswer(${i},'no')"  style="padding:8px 4px;border-radius:10px;border:2px solid #E0E7FF;background:white;font-size:.78rem;font-weight:800;cursor:pointer;font-family:inherit;transition:all .15s">❌ No</button>
-                <button class="idk-btn" onclick="window.__addSetAnswer(${i},'idk')" style="padding:8px 4px;border-radius:10px;border:2px solid #E0E7FF;background:white;font-size:.78rem;font-weight:800;cursor:pointer;font-family:inherit;transition:all .15s">🤷 Not Sure</button>
-              </div>
-              <div class="q-feedback" style="display:none;margin-top:8px;font-size:.78rem;font-weight:700;padding:6px 10px;border-radius:8px"></div>
-            </div>
-          `).join('')}
-          <div id="research-err" style="color:var(--red);font-size:.82rem;font-weight:800;min-height:20px;text-align:center;margin:4px 0 10px"></div>
-          <button class="btn btn-primary btn-lg btn-full" onclick="window.__addFinishResearch()">🕷️ Get Rocky's Verdict! →</button>
+        <div class="card" style="text-align:center;padding:28px">
+          <div style="font-size:2.2rem;margin-bottom:12px">📡</div>
+          <div style="font-weight:900;color:#374151;margin-bottom:6px">Live data unavailable</div>
+          <div style="font-size:.82rem;color:#6B7280;font-weight:600;margin-bottom:20px">The market data service might be busy. Rocky needs real data to research listed companies — try again!</div>
+          <button class="btn btn-primary btn-full" onclick="window.__retryResearch()">🔄 Try Again</button>
           <button class="btn btn-outline btn-full" style="margin-top:8px" onclick="window.__addBackToInfo()">← Back</button>
         </div>`;
 
-      _addState.answers.forEach((ans, i) => { if (ans !== null) applyAnswer(i, ans); });
-      window.__addSetAnswer = (i, val) => {
-        _addState.answers[i] = val;
-        applyAnswer(i, val);
-        document.getElementById('research-err').textContent = '';
-      };
-      window.__addFinishResearch = () => {
-        if (_addState.answers.some(a => a === null)) {
-          document.getElementById('research-err').textContent = '❌ Please answer all 5 questions first!';
-          return;
-        }
-        _addState.step = 2;
-        renderAddCompany();
-      };
+      window.__retryResearch = () => renderAddCompany();
     }
     window.__addBackToInfo = () => { _addState.step = 0; renderAddCompany(); };
 
