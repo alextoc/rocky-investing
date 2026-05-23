@@ -5,7 +5,6 @@
 CREATE TABLE IF NOT EXISTS profiles (
   id            UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   username      TEXT UNIQUE NOT NULL CHECK (length(username) >= 2),
-  pin_hash      TEXT NOT NULL,
   avatar_emoji  TEXT DEFAULT '🦁',
   avatar_color  TEXT DEFAULT '#4F46E5',
   stars         INTEGER DEFAULT 0,

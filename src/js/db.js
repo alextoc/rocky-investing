@@ -23,10 +23,10 @@ export async function getProfileByUsername(username) {
   return data ?? null;
 }
 
-export async function createProfile({ username, pinHash, avatarEmoji, avatarColor }) {
+export async function createProfile({ username, avatarEmoji, avatarColor }) {
   const { data, error } = await supabase
     .from('profiles')
-    .insert({ username: username.trim().toLowerCase(), pin_hash: pinHash, avatar_emoji: avatarEmoji, avatar_color: avatarColor })
+    .insert({ username: username.trim().toLowerCase(), avatar_emoji: avatarEmoji, avatar_color: avatarColor })
     .select()
     .single();
   if (error) throw error;
