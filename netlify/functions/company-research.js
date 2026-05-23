@@ -1,4 +1,5 @@
-// Uses Yahoo Finance /v7/finance/quote — same reliable endpoint as prices.js.
+// Uses Finnhub API for reliable market data.
+// Requires FINNHUB_KEY environment variable (free at finnhub.io).
 // Returns 5 kid-friendly data points: price, size, year perf, profitability, analyst sentiment.
 
 function fmtCap(n) {
@@ -15,15 +16,23 @@ function fmtPrice(n, cur) {
   return sym + n.toFixed(2);
 }
 
-function buildPoints(q) {
+async function fhGet(path, key) {
+  const res = await fetch(`https://finnhub.io/api/v1${path}&token=${key}`, {
+    headers: { 'User-Agent': 'Mozilla/5.0' },
+  });
+  if (!res.ok) throw new Error(`Finnhub HTTP ${res.status} — ${path}`);
+  return res.json();
+}
+
+function buildPoints(quote, profile, metrics, recs, cur) {
   const points = [];
 
   // ── 1. TODAY'S PRICE + DAY CHANGE ─────────────────────────────────────────
-  const price  = q.regularMarketPrice;
-  const chgPct = q.regularMarketChangePercent;
-  const cur    = q.currency;
-  let priceGrade = 'info';
-  let priceRocky = 'Price data not available.';
+  const price    = quote?.c;
+  const prevClose = quote?.pc;
+  const chgPct   = (price != null && prevClose) ? ((price - prevClose) / prevClose * 100) : null;
+
+  let priceGrade = 'info', priceRocky = 'Price data not available.';
   if (price != null && chgPct != null) {
     const arrow = chgPct >= 0 ? '▲' : '▼';
     const abs   = Math.abs(chgPct).toFixed(2);
@@ -52,10 +61,11 @@ function buildPoints(q) {
   }
 
   // ── 2. COMPANY SIZE (MARKET CAP) ──────────────────────────────────────────
-  const cap    = q.marketCap;
-  const sector = q.sector || '';
+  // Finnhub marketCapitalization is in millions USD
+  const cap    = profile?.marketCapitalization ? profile.marketCapitalization * 1e6 : null;
+  const sector = profile?.finnhubIndustry || '';
   let capGrade = 'info', capRocky = 'Market cap data not available.';
-  if (cap > 1e12)  { capGrade = 'green';  capRocky = `Worth over a TRILLION dollars — one of the biggest companies on Earth! Very established and trusted worldwide.`; }
+  if (cap > 1e12)      { capGrade = 'green';  capRocky = `Worth over a TRILLION dollars — one of the biggest companies on Earth! Very established and trusted worldwide.`; }
   else if (cap > 1e11) { capGrade = 'green';  capRocky = `Worth hundreds of billions — a giant company. Very well established with a strong track record.`; }
   else if (cap > 1e10) { capGrade = 'green';  capRocky = `Large, well-known company worth over $10 billion. Established and trusted by many investors.`; }
   else if (cap > 1e9)  { capGrade = 'yellow'; capRocky = `Medium-sized company worth $1–10 billion. More growth potential but also more risk than giants.`; }
@@ -67,31 +77,28 @@ function buildPoints(q) {
   });
 
   // ── 3. LAST 12 MONTHS PERFORMANCE ────────────────────────────────────────
-  const yrChg  = q.fiftyTwoWeekChange;
-  const yrHigh = q.fiftyTwoWeekHigh;
-  const yrLow  = q.fiftyTwoWeekLow;
+  // Finnhub returns 52WeekPriceReturnDaily as a percentage (e.g. 45.2 = +45.2%)
+  const yrChgPct = metrics?.metric?.['52WeekPriceReturnDaily'];
+  const yrHigh   = metrics?.metric?.['52WeekHigh'];
+  const yrLow    = metrics?.metric?.['52WeekLow'];
   let perfGrade = 'info', perfRocky = 'Annual performance data not available.';
-  if (yrChg != null) {
-    const pct = (yrChg * 100).toFixed(1);
-    if      (yrChg > 0.5)  { perfGrade = 'green';  perfRocky = `Up ${pct}% over the last year — HUGE growth! The market has been very excited about this company. 🚀`; }
-    else if (yrChg > 0.15) { perfGrade = 'green';  perfRocky = `Up ${pct}% over the last year — strong! Better than the average market return of ~10-15%.`; }
-    else if (yrChg > 0)    { perfGrade = 'yellow'; perfRocky = `Up ${pct}% over the last year — slow but positive. About average or slightly below market.`; }
-    else                   { perfGrade = 'red';    perfRocky = `Down ${Math.abs(pct)}% over the last year. The market hasn't been happy with this company. Be cautious!`; }
+  if (yrChgPct != null) {
+    const pct = yrChgPct.toFixed(1);
+    if      (yrChgPct > 50) { perfGrade = 'green';  perfRocky = `Up ${pct}% over the last year — HUGE growth! The market has been very excited about this company. 🚀`; }
+    else if (yrChgPct > 15) { perfGrade = 'green';  perfRocky = `Up ${pct}% over the last year — strong! Better than the average market return of ~10-15%.`; }
+    else if (yrChgPct > 0)  { perfGrade = 'yellow'; perfRocky = `Up ${pct}% over the last year — slow but positive. About average or slightly below market.`; }
+    else                     { perfGrade = 'red';    perfRocky = `Down ${Math.abs(pct)}% over the last year. The market hasn't been happy with this company. Be cautious!`; }
   }
-  const rangeText = (yrHigh && yrLow)
-    ? `  ·  Range: ${fmtPrice(yrLow, cur)} – ${fmtPrice(yrHigh, cur)}`
-    : '';
+  const rangeText = (yrHigh && yrLow) ? `  ·  Range: ${fmtPrice(yrLow, cur)} – ${fmtPrice(yrHigh, cur)}` : '';
   points.push({
     emoji: '📈', title: 'Last 12 Months',
-    detail: yrChg != null
-      ? `${yrChg >= 0 ? '+' : ''}${(yrChg * 100).toFixed(1)}%${rangeText}`
-      : 'Annual data unavailable',
+    detail: yrChgPct != null ? `${yrChgPct >= 0 ? '+' : ''}${yrChgPct.toFixed(1)}%${rangeText}` : 'Annual data unavailable',
     rocky: perfRocky, grade: perfGrade,
   });
 
   // ── 4. PROFITABILITY (P/E RATIO + EPS) ───────────────────────────────────
-  const pe  = q.trailingPE;
-  const eps = q.epsTrailingTwelveMonths;
+  const pe  = metrics?.metric?.peTTM  ?? metrics?.metric?.peAnnual;
+  const eps = metrics?.metric?.epsTTM ?? metrics?.metric?.epsAnnual;
   let monGrade = 'info', monRocky = 'Profitability data not available.';
   if (pe != null && pe > 0) {
     if      (pe < 15) { monGrade = 'green';  monRocky = `P/E of ${pe.toFixed(0)} — looks like a bargain! You're paying $${pe.toFixed(0)} for every $1 of annual profit. Cheap!`; }
@@ -114,30 +121,31 @@ function buildPoints(q) {
   });
 
   // ── 5. ANALYST SENTIMENT ─────────────────────────────────────────────────
-  const recMean = q.recommendationMean;
-  const numAna  = q.numberOfAnalystOpinions;
-  const recKey  = (q.averageAnalystRating || '').toLowerCase();
+  // recs is an array sorted newest-first; each entry has strongBuy/buy/hold/sell/strongSell counts
+  const rec   = Array.isArray(recs) && recs.length ? recs[0] : null;
   let expGrade = 'info', expRocky = 'No analyst ratings available for this company.';
-  let recLabel = 'No rating';
+  let recLabel = 'No rating', numAna = 0;
 
-  if (recMean != null) {
-    if      (recMean <= 1.5) { expGrade = 'green';  recLabel = 'Strong Buy';     expRocky = `${numAna || 'Multiple'} professional analysts gave this a STRONG BUY! Wall Street is very excited! 🚀`; }
-    else if (recMean <= 2.5) { expGrade = 'green';  recLabel = 'Buy';            expRocky = `Analysts say BUY. Professional investors are positive — they think the stock will rise.`; }
-    else if (recMean <= 3.5) { expGrade = 'yellow'; recLabel = 'Hold';           expRocky = `Analysts say HOLD — it's okay but they're not excited. Good time to watch and wait.`; }
-    else if (recMean <= 4.5) { expGrade = 'red';    recLabel = 'Underperform';   expRocky = `Analysts are cautious — they think other stocks might do better. A warning sign!`; }
-    else                     { expGrade = 'red';    recLabel = 'Sell';           expRocky = `Analysts say SELL. Experts have serious concerns about this company right now.`; }
-  } else if (recKey.includes('buy')) {
-    expGrade = 'green'; recLabel = 'Buy'; expRocky = 'Analysts are positive — they expect the stock to rise.';
-  } else if (recKey.includes('hold')) {
-    expGrade = 'yellow'; recLabel = 'Hold'; expRocky = 'Analysts say hold — not exciting, but not bad either.';
-  } else if (recKey.includes('sell')) {
-    expGrade = 'red'; recLabel = 'Sell'; expRocky = 'Analysts have concerns — they think the stock may fall.';
+  if (rec) {
+    const sb = rec.strongBuy   || 0;
+    const b  = rec.buy         || 0;
+    const h  = rec.hold        || 0;
+    const s  = rec.sell        || 0;
+    const ss = rec.strongSell  || 0;
+    numAna   = sb + b + h + s + ss;
+    // Weighted mean: strongBuy=1 … strongSell=5 (same scale as Yahoo recommendationMean)
+    const score = numAna > 0 ? (sb*1 + b*2 + h*3 + s*4 + ss*5) / numAna : 3;
+    if      (score <= 1.5) { expGrade = 'green';  recLabel = 'Strong Buy';   expRocky = `${numAna} professional analysts gave this a STRONG BUY! Wall Street is very excited! 🚀`; }
+    else if (score <= 2.5) { expGrade = 'green';  recLabel = 'Buy';          expRocky = `Analysts say BUY. Professional investors are positive — they think the stock will rise.`; }
+    else if (score <= 3.5) { expGrade = 'yellow'; recLabel = 'Hold';         expRocky = `Analysts say HOLD — it's okay but they're not excited. Good time to watch and wait.`; }
+    else if (score <= 4.5) { expGrade = 'red';    recLabel = 'Underperform'; expRocky = `Analysts are cautious — they think other stocks might do better. A warning sign!`; }
+    else                   { expGrade = 'red';    recLabel = 'Sell';         expRocky = `Analysts say SELL. Experts have serious concerns about this company right now.`; }
   }
 
-  const anaText = numAna ? `${recLabel}  ·  ${numAna} analysts` : recLabel;
+  const anaText = numAna > 0 ? `${recLabel}  ·  ${numAna} analysts` : recLabel;
   points.push({
     emoji: '🎯', title: 'What Experts Think',
-    detail: recMean != null || recKey ? anaText : 'No analyst data',
+    detail: rec ? anaText : 'No analyst data',
     rocky: expRocky, grade: expGrade,
   });
 
@@ -147,52 +155,47 @@ function buildPoints(q) {
 export async function handler(event) {
   if (event.httpMethod !== 'POST') return { statusCode: 405 };
 
+  const key = process.env.FINNHUB_KEY;
+  if (!key) {
+    console.error('FINNHUB_KEY env var not set');
+    return { statusCode: 200, body: JSON.stringify({ fallback: true }) };
+  }
+
   let ticker, name;
   try { ({ ticker, name } = JSON.parse(event.body || '{}')); }
   catch { return { statusCode: 400, body: JSON.stringify({ error: 'Bad JSON' }) }; }
 
   if (!ticker) return { statusCode: 200, body: JSON.stringify({ fallback: true }) };
 
-  const fields = [
-    'regularMarketPrice', 'regularMarketChangePercent', 'regularMarketChange',
-    'marketCap', 'trailingPE', 'epsTrailingTwelveMonths',
-    'fiftyTwoWeekChange', 'fiftyTwoWeekHigh', 'fiftyTwoWeekLow',
-    'shortName', 'longName', 'sector', 'industry', 'currency',
-    'recommendationMean', 'numberOfAnalystOpinions', 'averageAnalystRating',
-  ].join(',');
-
-  const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${ticker}&fields=${fields}`;
-
   try {
-    const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-    if (!res.ok) throw new Error(`Yahoo HTTP ${res.status}`);
+    const sym = encodeURIComponent(ticker);
 
-    const json = await res.json();
-    const q    = json?.quoteResponse?.result?.[0];
-    if (!q) return { statusCode: 200, body: JSON.stringify({ fallback: true }) };
+    // All 4 requests run in parallel — fast!
+    const [quote, profile, metrics, recs] = await Promise.all([
+      fhGet(`/quote?symbol=${sym}`, key),
+      fhGet(`/stock/profile2?symbol=${sym}`, key),
+      fhGet(`/stock/metric?symbol=${sym}&metric=all`, key),
+      fhGet(`/stock/recommendation?symbol=${sym}`, key).catch(() => []),
+    ]);
 
-    // Optional: grab company description from quoteSummary (don't fail if unavailable)
-    let description = '';
-    try {
-      const sUrl = `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${ticker}?modules=assetProfile`;
-      const sRes = await fetch(sUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-      if (sRes.ok) {
-        const sJson = await sRes.json();
-        const bio   = sJson?.quoteSummary?.result?.[0]?.assetProfile?.longBusinessSummary || '';
-        description = bio.length > 300 ? bio.slice(0, 300).replace(/\s\S*$/, '') + '…' : bio;
-      }
-    } catch { /* optional — skip silently */ }
+    // No price data = invalid ticker
+    if (!quote?.c) return { statusCode: 200, body: JSON.stringify({ fallback: true }) };
 
-    const companyName = q.longName || q.shortName || name || ticker;
-    const points      = buildPoints(q);
+    const cur         = profile?.currency || 'USD';
+    const companyName = profile?.name || name || ticker;
+    const points      = buildPoints(quote, profile, metrics, recs, cur);
     const greenCount  = points.filter(p => p.grade === 'green').length;
+    const bio         = profile?.description || '';
+    const description = bio.length > 300 ? bio.slice(0, 300).replace(/\s\S*$/, '') + '…' : bio;
 
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=900' },
       body: JSON.stringify({
-        companyName, ticker: q.symbol || ticker,
-        description, sector: q.sector, industry: q.industry,
+        companyName, ticker,
+        description,
+        sector:   profile?.finnhubIndustry,
+        industry: profile?.finnhubIndustry,
         points, greenCount,
       }),
     };
