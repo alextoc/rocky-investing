@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rocky's Investing Academy 🪨</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/src/css/styles.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Bottom nav — shown after login -->
+    <nav id="nav-bar" class="nav"></nav>
+
+    <!-- HUD — shown during game chapters -->
+    <div id="hud" class="hud">
+      <div class="hud-stars">⭐ <span id="sc">0</span></div>
+      <div class="hud-bar"><div class="hud-bar-fill" id="pf" style="width:0%"></div></div>
+      <div class="hud-chap" id="cl">Chapter 1 / 10</div>
+    </div>
+
+    <!-- Main content — each screen renders here -->
+    <main id="screen-login"     class="screen active"></main>
+    <main id="screen-home"      class="screen"></main>
+    <main id="screen-game"      class="screen"></main>
+    <main id="screen-lab"       class="screen"></main>
+    <main id="screen-watchlist" class="screen"></main>
+    <main id="screen-portfolio" class="screen"></main>
+    <main id="screen-parent"    class="screen"></main>
+  </div>
+
+  <!-- Toast notifications -->
+  <div id="toast-wrap"></div>
+
+  <script type="module" src="/src/js/main.js"></script>
+</body>
+</html>
