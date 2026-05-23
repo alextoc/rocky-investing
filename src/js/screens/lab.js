@@ -186,7 +186,7 @@ function rcCard(c) {
 }
 
 // ── ADD CUSTOM COMPANY FLOW ───────────────────────────────────────────────────
-function renderAddCompany() {
+async function renderAddCompany() {
   const el = document.getElementById('screen-lab');
   if (!_addState) return;
 
