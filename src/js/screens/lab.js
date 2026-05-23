@@ -12,26 +12,41 @@ let _custom    = [];
 let _addState  = null;
 
 const ADD_Q = [
-  { q:'Does your family actually USE this company?',
-    hint:'Does anyone at home buy from them, use their app, or visit their store?',
-    yes:'You and your family use and trust it 💙',
-    no:"You don't actually use this company yourself 🤔" },
-  { q:'Do LOTS of people you know use it?',
-    hint:'Think about friends, school, your neighbourhood — is it popular with many people?',
-    yes:'Very popular — lots of people love it ❤️',
-    no:'Not many people around you use it yet 🤏' },
-  { q:'Is it GROWING bigger and more popular?',
-    hint:'Has it gotten bigger in the last few years? More stores, more users, more products?',
-    yes:'Growing bigger and more popular every year 📈',
-    no:'Not growing much right now 🐢' },
-  { q:'Do people NEED it, or just want it?',
-    hint:'Would people still buy it even if money was tight? Is it essential?',
-    yes:'People genuinely NEED it — essential! ⚡',
-    no:'Nice to have, but not a real necessity 🛍️' },
-  { q:'Is it HARD for competitors to copy or beat?',
-    hint:'Is there something special — a brand, a habit, a patent — that makes it hard to replace?',
-    yes:'Strong moat — hard to replace! 🏰',
-    no:'Competitors could probably copy or beat it 😬' },
+  {
+    q:    'Have you or your family heard of this company?',
+    hint: 'Do people around you know this brand? Could you find it in a shop or online?',
+    yes:  'Well known — people around you know and use this! 🙌',
+    no:   'Not many people around you know it yet 🤏',
+    idk:  'Not sure how well-known it is',
+  },
+  {
+    q:    'Does it make something useful or important?',
+    hint: 'Would people miss it if it disappeared? Or is it more of a nice-to-have?',
+    yes:  'Makes something genuinely useful — people really need it! ⚡',
+    no:   'Nice to have, but not really essential 🛍️',
+    idk:  'Hard to say how important it really is',
+  },
+  {
+    q:    'Do you think MORE people will use this in the future?',
+    hint: 'Is it getting bigger and more popular? Will it still be around in 10 years?',
+    yes:  'Growing — more people will use it in future! 📈',
+    no:   'Might shrink or get left behind 🐢',
+    idk:  'Hard to predict — need to learn more',
+  },
+  {
+    q:    'Is it hard for other companies to copy or replace?',
+    hint: 'Does it have a famous brand, special technology, or something others can\'t easily match?',
+    yes:  'Hard to replace — strong advantage over competitors! 🏰',
+    no:   'Others could probably copy or beat it 😬',
+    idk:  'Not sure if it has something special',
+  },
+  {
+    q:    'Would you feel good owning a tiny piece of this company?',
+    hint: 'Trust your gut! Does this feel like a quality business you\'d be proud of?',
+    yes:  'Yes — excited to own a piece of this! 🌟',
+    no:   'Not really — something feels off 🤔',
+    idk:  'Need to learn more before deciding',
+  },
 ];
 const ADD_EMOJIS = ['🏢','🍕','🏪','🎮','🚗','🍦','⚽','🎬','🏥','👗','📱','🎨','🏠','🍜','✈️','🎸'];
 
@@ -381,7 +396,7 @@ async function renderAddCompany() {
             <div class="tutor-emoji">🕷️</div>
             <div class="bubble">
               <div class="bubble-tag">Rocky 🪨</div>
-              ${_addState.ticker ? `Rocky couldn't find live data for <strong>${_addState.name}</strong> — maybe private company!` : `<strong>${_addState.name}</strong> has no ticker yet.`} No worry — Rocky has 5 questions. You and parent investigate together! 🔍
+              Rocky is investigating <strong>${_addState.name}</strong>! 🔍 Answer each question with what you know — if you're not sure, just tap <strong>🤷 Not Sure</strong> and Rocky will still give a verdict!
             </div>
           </div>
         </div>
@@ -390,9 +405,10 @@ async function renderAddCompany() {
             <div class="research-q" data-qi="${i}" style="margin-bottom:12px;padding:14px;border-radius:14px;border:2px solid #E0E7FF;background:#F8FAFF;transition:all .2s">
               <div style="font-size:.88rem;font-weight:900;color:#1F2937;margin-bottom:3px">${i+1}. ${q.q}</div>
               <div style="font-size:.75rem;color:#6B7280;font-weight:600;margin-bottom:10px">💡 ${q.hint}</div>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-                <button class="yes-btn" onclick="window.__addSetAnswer(${i},true)" style="padding:9px;border-radius:10px;border:2px solid #E0E7FF;background:white;font-size:.88rem;font-weight:800;cursor:pointer;font-family:inherit;transition:all .15s">✅ Yes!</button>
-                <button class="no-btn"  onclick="window.__addSetAnswer(${i},false)" style="padding:9px;border-radius:10px;border:2px solid #E0E7FF;background:white;font-size:.88rem;font-weight:800;cursor:pointer;font-family:inherit;transition:all .15s">❌ No</button>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
+                <button class="yes-btn" onclick="window.__addSetAnswer(${i},'yes')" style="padding:8px 4px;border-radius:10px;border:2px solid #E0E7FF;background:white;font-size:.78rem;font-weight:800;cursor:pointer;font-family:inherit;transition:all .15s">✅ Yes!</button>
+                <button class="no-btn"  onclick="window.__addSetAnswer(${i},'no')"  style="padding:8px 4px;border-radius:10px;border:2px solid #E0E7FF;background:white;font-size:.78rem;font-weight:800;cursor:pointer;font-family:inherit;transition:all .15s">❌ No</button>
+                <button class="idk-btn" onclick="window.__addSetAnswer(${i},'idk')" style="padding:8px 4px;border-radius:10px;border:2px solid #E0E7FF;background:white;font-size:.78rem;font-weight:800;cursor:pointer;font-family:inherit;transition:all .15s">🤷 Not Sure</button>
               </div>
               <div class="q-feedback" style="display:none;margin-top:8px;font-size:.78rem;font-weight:700;padding:6px 10px;border-radius:8px"></div>
             </div>
@@ -410,7 +426,7 @@ async function renderAddCompany() {
       };
       window.__addFinishResearch = () => {
         if (_addState.answers.some(a => a === null)) {
-          document.getElementById('research-err').textContent = '❌ Please answer all 5 clues first!';
+          document.getElementById('research-err').textContent = '❌ Please answer all 5 questions first!';
           return;
         }
         _addState.step = 2;
@@ -421,15 +437,21 @@ async function renderAddCompany() {
 
   } else {
     // STEP 2: Verdict
-    const score  = _addState.answers.filter(Boolean).length;
-    const clues  = ADD_Q.map((q, i) => ({ t: _addState.answers[i] ? q.yes : q.no, g: _addState.answers[i] }));
-    const rating = score>=5?5:score>=4?4:score>=3?3:score>=2?2:1;
+    const score  = _addState.answers.filter(a => a === 'yes').length;
+    const clues  = ADD_Q.map((q, i) => ({
+      t: _addState.answers[i] === 'yes' ? q.yes : _addState.answers[i] === 'no' ? q.no : `🤷 ${q.idk}`,
+      g: _addState.answers[i] === 'yes',
+    }));
+    const rating   = score>=5?5:score>=4?4:score>=3?3:score>=2?2:1;
+    const idkCount = _addState.answers.filter(a => a === 'idk').length;
+    const idkNote  = idkCount > 0 ? ` Rocky also counted ${idkCount} "not sure" answer${idkCount>1?'s':''} — great things to research more!` : '';
     const verdicts = {
-      5:`Amaze amaze amaze!! ${_addState.name} is extraordinary — all five green clues! Rocky say: add to watchlist right now!`,
-      4:`Blurt! ${_addState.name} very strong — four green clues. Rocky is impress! Worth watching carefully.`,
-      3:`${_addState.name} is mixed — three green, two red. Is okay but not amazing. Watch carefully before committing.`,
-      2:`Only two green clues for ${_addState.name}. Rocky is cautious. Maybe watch and wait.`,
-      1:`Rocky is honest: ${_addState.name} has mostly red clues right now. Maybe watch and wait before investing.`,
+      5:`Amaze amaze amaze!! ${_addState.name} — five green signals! Rocky is very impress. Add to watchlist right now!`,
+      4:`Blurt! ${_addState.name} very strong — four green signals. Worth watching closely!${idkNote}`,
+      3:`${_addState.name} looks decent — three greens. Not amazing but not bad. Keep investigating!${idkNote}`,
+      2:`Only two green signals for ${_addState.name}. Rocky is cautious — learn more before investing.${idkNote}`,
+      1:`Rocky is honest: ${_addState.name} mostly unclear right now. Do more research first!${idkNote}`,
+      0:`Rocky couldn't find clear positives yet. Lots of "not sure" — time to investigate more!${idkNote}`,
     };
     el.innerHTML = `
       <div class="card">
@@ -448,7 +470,7 @@ async function renderAddCompany() {
           </div>
         </div>
         <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:12px">
-          ${clues.map(cl=>`<div class="clue ${cl.g?'g':'b'}"><span>${cl.g?'✅':'❌'}</span><span>${cl.t}</span></div>`).join('')}
+          ${clues.map((cl,i)=>{const a=_addState.answers[i];return`<div class="clue ${a==='yes'?'g':a==='no'?'b':''}"><span>${a==='yes'?'✅':a==='no'?'❌':'🤷'}</span><span>${cl.t}</span></div>`}).join('')}
         </div>
         <div class="rc-verdict">🕷️ ${verdicts[score]||verdicts[1]}</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px">
@@ -482,19 +504,24 @@ async function renderAddCompany() {
 function applyAnswer(i, val) {
   const card = document.querySelector(`.research-q[data-qi="${i}"]`);
   if (!card) return;
-  card.style.borderColor = val ? '#10B981' : '#EF4444';
-  card.style.background  = val ? '#D1FAE5' : '#FEE2E2';
+  const isYes = val === 'yes', isNo = val === 'no', isIdk = val === 'idk';
+  card.style.borderColor = isYes ? '#10B981' : isNo ? '#EF4444' : '#F59E0B';
+  card.style.background  = isYes ? '#D1FAE5' : isNo ? '#FEE2E2' : '#FEF3C7';
   const yesBtn = card.querySelector('.yes-btn');
   const noBtn  = card.querySelector('.no-btn');
-  yesBtn.style.background  = val ? '#10B981' : 'white';
-  yesBtn.style.color       = val ? 'white'   : '';
-  yesBtn.style.borderColor = val ? '#10B981' : '#E0E7FF';
-  noBtn.style.background   = val ? 'white'   : '#EF4444';
-  noBtn.style.color        = val ? ''        : 'white';
-  noBtn.style.borderColor  = val ? '#E0E7FF' : '#EF4444';
+  const idkBtn = card.querySelector('.idk-btn');
+  yesBtn.style.background  = isYes ? '#10B981' : 'white';
+  yesBtn.style.color       = isYes ? 'white' : '';
+  yesBtn.style.borderColor = isYes ? '#10B981' : '#E0E7FF';
+  noBtn.style.background   = isNo ? '#EF4444' : 'white';
+  noBtn.style.color        = isNo ? 'white' : '';
+  noBtn.style.borderColor  = isNo ? '#EF4444' : '#E0E7FF';
+  idkBtn.style.background  = isIdk ? '#F59E0B' : 'white';
+  idkBtn.style.color       = isIdk ? 'white' : '';
+  idkBtn.style.borderColor = isIdk ? '#F59E0B' : '#E0E7FF';
   const fb = card.querySelector('.q-feedback');
   fb.style.display    = 'block';
-  fb.textContent      = val ? ADD_Q[i].yes : ADD_Q[i].no;
-  fb.style.background = val ? '#A7F3D0' : '#FECACA';
-  fb.style.color      = val ? '#065F46' : '#991B1B';
+  fb.textContent      = isYes ? ADD_Q[i].yes : isNo ? ADD_Q[i].no : `🤷 ${ADD_Q[i].idk}`;
+  fb.style.background = isYes ? '#A7F3D0' : isNo ? '#FECACA' : '#FDE68A';
+  fb.style.color      = isYes ? '#065F46' : isNo ? '#991B1B' : '#92400E';
 }
