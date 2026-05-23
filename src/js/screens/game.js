@@ -186,7 +186,7 @@ const BONUS_LESSONS = [
   {
     id: 'markets',
     emoji: '🌏', title: 'Australia vs USA Markets',
-    teaser: 'ASX vs S&P 500 — what's the difference?',
+    teaser: "ASX vs S&P 500 — what's the difference?",
     content: `
       <p>Australia has its own stock market called the <strong>ASX (Australian Securities Exchange)</strong>. The USA has the <strong>NYSE and NASDAQ</strong>. They work the same way — companies list shares, investors buy and sell.</p>
       <br>
