@@ -1,6 +1,46 @@
-// Uses Yahoo Finance v7/finance/quote — same endpoint as prices.js (proven reliable from Netlify).
-// Works for both US (AAPL) and ASX (QAN.AX) tickers. No API key required.
-// Returns 5 kid-friendly data points with colour grades.
+// Yahoo Finance with cookie+crumb auth — same technique used by yfinance Python library.
+// Avoids the "Unauthorized" block by first getting a session cookie from Yahoo.
+
+const UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+
+async function getYahooCookiesAndCrumb() {
+  // Step 1: Hit Yahoo Finance to receive a session cookie (B cookie)
+  const homeRes = await fetch('https://finance.yahoo.com/', {
+    headers: { 'User-Agent': UA, 'Accept': 'text/html' },
+    redirect: 'follow',
+  });
+
+  // Collect all Set-Cookie values
+  const rawCookie = homeRes.headers.get('set-cookie') || '';
+  // Each cookie is separated by commas but paths also contain commas — split on "; " boundaries
+  const cookies = rawCookie.split(/,(?=[^ ])/).map(c => c.split(';')[0].trim()).filter(Boolean).join('; ');
+
+  // Step 2: Get the crumb (a CSRF-like token Yahoo requires since 2023)
+  const crumbRes = await fetch('https://query1.finance.yahoo.com/v1/test/getcrumb', {
+    headers: { 'User-Agent': UA, 'Cookie': cookies },
+  });
+  const crumb = (await crumbRes.text()).trim();
+
+  return { cookies, crumb };
+}
+
+async function fetchYahooQuote(ticker, cookies, crumb) {
+  const fields = [
+    'regularMarketPrice', 'regularMarketChangePercent',
+    'marketCap', 'trailingPE', 'epsTrailingTwelveMonths',
+    'fiftyTwoWeekChange', 'fiftyTwoWeekHigh', 'fiftyTwoWeekLow',
+    'shortName', 'longName', 'sector', 'currency',
+    'recommendationMean', 'numberOfAnalystOpinions', 'averageAnalystRating',
+  ].join(',');
+
+  const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${ticker}&fields=${fields}&crumb=${encodeURIComponent(crumb)}`;
+  const res = await fetch(url, { headers: { 'User-Agent': UA, 'Cookie': cookies } });
+  if (!res.ok) throw new Error(`Yahoo v7 HTTP ${res.status}`);
+  const json = await res.json();
+  return json?.quoteResponse?.result?.[0] || null;
+}
+
+// ── FORMATTING ────────────────────────────────────────────────────────────────
 
 function fmtCap(n) {
   if (n == null) return null;
@@ -50,7 +90,7 @@ function buildPoints(q) {
   points.push({ emoji:'🏰', title:'Company Size', detail: cap ? `${fmtCap(cap)}${sector ? '  ·  ' + sector : ''}` : sector || 'Unavailable', rocky:capRocky, grade:capGrade });
 
   // ── 3. LAST 12 MONTHS ────────────────────────────────────────────────────
-  const yrChg  = q.fiftyTwoWeekChange;   // decimal e.g. 0.534 = +53.4%
+  const yrChg  = q.fiftyTwoWeekChange;
   const yrHigh = q.fiftyTwoWeekHigh;
   const yrLow  = q.fiftyTwoWeekLow;
   let perfGrade = 'info', perfRocky = 'Annual performance data not available.';
@@ -73,17 +113,16 @@ function buildPoints(q) {
   const eps = q.epsTrailingTwelveMonths;
   let monGrade = 'info', monRocky = 'Profitability data not available.';
   if (pe != null && pe > 0) {
-    if      (pe < 15) { monGrade = 'green';  monRocky = `P/E of ${pe.toFixed(0)} — looks like a bargain! You're paying $${pe.toFixed(0)} for every $1 of annual profit. Cheap!`; }
+    if      (pe < 15) { monGrade = 'green';  monRocky = `P/E of ${pe.toFixed(0)} — looks like a bargain! You're paying $${pe.toFixed(0)} for every $1 of annual profit.`; }
     else if (pe < 25) { monGrade = 'green';  monRocky = `P/E of ${pe.toFixed(0)} — fair price. Not too cheap, not too expensive. A reasonable deal.`; }
     else if (pe < 50) { monGrade = 'yellow'; monRocky = `P/E of ${pe.toFixed(0)} — a bit pricey. Investors expect big future growth to justify this price!`; }
     else              { monGrade = 'yellow'; monRocky = `Very high P/E of ${pe.toFixed(0)} — investors are betting heavily on future growth. Risky if growth disappoints!`; }
   } else if (pe != null && pe <= 0) {
-    monGrade = 'red'; monRocky = `Negative P/E — currently losing money. The company is spending more than it earns. Very risky!`;
+    monGrade = 'red'; monRocky = `Negative P/E — currently losing money. The company spends more than it earns. Very risky!`;
   } else if (eps != null) {
     monGrade = eps > 0 ? 'yellow' : 'red';
-    monRocky = eps > 0
-      ? `Earning ${fmtPrice(eps, cur)} per share but P/E not available. May be growing but not yet fully valued.`
-      : `Losing money — negative earnings per share. High risk investment right now.`;
+    monRocky = eps > 0 ? `Earning ${fmtPrice(eps, cur)} per share — profitable, but P/E not available.`
+                       : `Losing money — negative earnings per share. High risk right now.`;
   }
   const epsText = eps != null ? `  ·  Earns ${fmtPrice(Math.abs(eps), cur)}/share` : '';
   points.push({
@@ -99,8 +138,8 @@ function buildPoints(q) {
   let expGrade = 'info', expRocky = 'No analyst ratings available for this company.';
   let recLabel = 'No rating';
   if (recMean != null) {
-    if      (recMean <= 1.5) { expGrade = 'green';  recLabel = 'Strong Buy';   expRocky = `${numAna || 'Multiple'} professional analysts gave this a STRONG BUY! Wall Street is very excited! 🚀`; }
-    else if (recMean <= 2.5) { expGrade = 'green';  recLabel = 'Buy';          expRocky = `Analysts say BUY. Professional investors are positive — they think the stock will rise.`; }
+    if      (recMean <= 1.5) { expGrade = 'green';  recLabel = 'Strong Buy';   expRocky = `${numAna || 'Multiple'} analysts gave this a STRONG BUY! Wall Street is very excited! 🚀`; }
+    else if (recMean <= 2.5) { expGrade = 'green';  recLabel = 'Buy';          expRocky = `Analysts say BUY — they think the stock will rise.`; }
     else if (recMean <= 3.5) { expGrade = 'yellow'; recLabel = 'Hold';         expRocky = `Analysts say HOLD — it's okay but they're not excited. Good time to watch and wait.`; }
     else if (recMean <= 4.5) { expGrade = 'red';    recLabel = 'Underperform'; expRocky = `Analysts are cautious — they think other stocks might do better. A warning sign!`; }
     else                     { expGrade = 'red';    recLabel = 'Sell';         expRocky = `Analysts say SELL. Experts have serious concerns about this company right now.`; }
@@ -121,6 +160,8 @@ function buildPoints(q) {
   return points;
 }
 
+// ── HANDLER ───────────────────────────────────────────────────────────────────
+
 export async function handler(event) {
   if (event.httpMethod !== 'POST') return { statusCode: 405 };
 
@@ -130,22 +171,11 @@ export async function handler(event) {
 
   if (!ticker) return { statusCode: 200, body: JSON.stringify({ fallback: true }) };
 
-  const fields = [
-    'regularMarketPrice', 'regularMarketChangePercent',
-    'marketCap', 'trailingPE', 'epsTrailingTwelveMonths',
-    'fiftyTwoWeekChange', 'fiftyTwoWeekHigh', 'fiftyTwoWeekLow',
-    'shortName', 'longName', 'sector', 'currency',
-    'recommendationMean', 'numberOfAnalystOpinions', 'averageAnalystRating',
-  ].join(',');
-
-  const url = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${ticker}&fields=${fields}`;
-
   try {
-    const res = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-    if (!res.ok) throw new Error(`Yahoo HTTP ${res.status}`);
+    // Get Yahoo session cookie + crumb, then fetch quote data
+    const { cookies, crumb } = await getYahooCookiesAndCrumb();
+    const q = await fetchYahooQuote(ticker, cookies, crumb);
 
-    const json = await res.json();
-    const q    = json?.quoteResponse?.result?.[0];
     if (!q) return { statusCode: 200, body: JSON.stringify({ fallback: true }) };
 
     const companyName = q.longName || q.shortName || name || ticker;
@@ -155,12 +185,7 @@ export async function handler(event) {
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=900' },
-      body: JSON.stringify({
-        companyName, ticker: q.symbol || ticker,
-        description: '',
-        sector: q.sector, industry: q.sector,
-        points, greenCount,
-      }),
+      body: JSON.stringify({ companyName, ticker: q.symbol || ticker, description:'', sector:q.sector, points, greenCount }),
     };
   } catch (e) {
     console.error('company-research error:', e.message);
