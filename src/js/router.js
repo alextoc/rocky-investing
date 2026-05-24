@@ -7,6 +7,7 @@ const NAV_ITEMS = [
   { id: 'screen-lab',       icon: '🔬', label: 'Research' },
   { id: 'screen-watchlist', icon: '👁',  label: 'Watchlist' },
   { id: 'screen-portfolio', icon: '💼', label: 'Portfolio' },
+  { id: 'screen-rivalry',   icon: '⚔️',  label: 'Rivals' },
 ];
 
 let currentScreen = null;

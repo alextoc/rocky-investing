@@ -109,6 +109,48 @@ export async function deleteHolding(holdingId) {
   if (error) throw error;
 }
 
+// ── PREDICTIONS ───────────────────────────────────────────────────────────────
+export async function getPredictions(profileId, weekStart) {
+  try {
+    let query = supabase
+      .from('predictions')
+      .select('*')
+      .eq('profile_id', profileId)
+      .order('created_at', { ascending: false });
+    if (weekStart) query = query.eq('week_start', weekStart);
+    const { data, error } = await query;
+    if (error) { console.warn('getPredictions:', error.message); return []; }
+    return data ?? [];
+  } catch { return []; }
+}
+
+export async function savePrediction(profileId, { ticker, name, emoji, direction, priceAtPrediction, weekStart }) {
+  try {
+    const { data, error } = await supabase
+      .from('predictions')
+      .upsert({
+        profile_id: profileId,
+        ticker, name, emoji, direction,
+        price_at_prediction: priceAtPrediction,
+        week_start: weekStart,
+      }, { onConflict: 'profile_id,ticker,week_start' })
+      .select()
+      .single();
+    if (error) { console.warn('savePrediction:', error.message); return null; }
+    return data;
+  } catch (e) { console.warn('savePrediction exception:', e); return null; }
+}
+
+export async function resolvePrediction(id, { correct, starsAwarded }) {
+  try {
+    const { error } = await supabase
+      .from('predictions')
+      .update({ resolved: true, correct, stars_awarded: starsAwarded })
+      .eq('id', id);
+    if (error) console.warn('resolvePrediction:', error.message);
+  } catch (e) { console.warn('resolvePrediction exception:', e); }
+}
+
 // ── PRICE CACHE ───────────────────────────────────────────────────────────────
 export async function getCachedPrices(tickers) {
   if (!tickers.length) return {};

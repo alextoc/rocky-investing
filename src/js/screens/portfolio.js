@@ -1,4 +1,4 @@
-import { getHoldings, deleteHolding } from '../db.js';
+import { getHoldings, deleteHolding, getPredictions } from '../db.js';
 import { fetchPrices, formatPrice, formatChangePct, priceClass } from '../prices-client.js';
 import { sectorLabel, sectorBg, sectorFg, toast } from '../utils.js';
 import { onNavigate } from '../router.js';
@@ -24,13 +24,16 @@ async function renderPortfolio() {
   }
 
   el.innerHTML = `<div class="loading-spinner"><div class="spinner"></div>Loading portfolio…</div>`;
-  const holdings = await getHoldings(_session.profileId);
-  const tickers  = [...new Set(holdings.map(h => h.ticker))];
-  const prices   = tickers.length ? await fetchPrices(tickers) : {};
-  renderFull(el, holdings, prices);
+  const [holdings, allPredictions] = await Promise.all([
+    getHoldings(_session.profileId),
+    getPredictions(_session.profileId),    // all weeks, no filter
+  ]);
+  const tickers = [...new Set(holdings.map(h => h.ticker))];
+  const prices  = tickers.length ? await fetchPrices(tickers) : {};
+  renderFull(el, holdings, prices, allPredictions);
 }
 
-function renderFull(el, holdings, prices) {
+function renderFull(el, holdings, prices, allPredictions = []) {
   let totalValue = 0, totalCost = 0;
   for (const h of holdings) {
     const p = prices[h.ticker]?.price ?? h.buy_price;
@@ -83,6 +86,8 @@ function renderFull(el, holdings, prices) {
       }).join('')}
     </div>`}
 
+    ${buildPredictionHistory(allPredictions)}
+
     <div class="card" style="text-align:center">
       <div style="font-size:.82rem;color:#6B7280;margin-bottom:10px">
         Parent can add new purchases from the <strong>Parent Portal</strong>
@@ -96,6 +101,74 @@ function renderFull(el, holdings, prices) {
     toast('Holding removed.');
     renderPortfolio();
   };
+}
+
+// ── Phase 2: Prediction history ────────────────────────────────────────────────
+function buildPredictionHistory(allPredictions) {
+  const resolved = allPredictions.filter(p => p.resolved);
+  if (!resolved.length) return '';
+
+  // Group by week_start
+  const byWeek = {};
+  for (const p of resolved) {
+    (byWeek[p.week_start] = byWeek[p.week_start] ?? []).push(p);
+  }
+  const weeks = Object.keys(byWeek).sort((a, b) => b.localeCompare(a)).slice(0, 6); // last 6 weeks
+
+  // Compute streak: consecutive weeks with > 50% correct
+  let streak = 0;
+  for (const wk of weeks) {
+    const wPreds   = byWeek[wk];
+    const correct  = wPreds.filter(p => p.correct).length;
+    if (correct / wPreds.length > 0.5) streak++;
+    else break;
+  }
+
+  const totalCorrect = resolved.filter(p => p.correct).length;
+  const totalStars   = resolved.reduce((s, p) => s + (p.stars_awarded ?? 0), 0);
+
+  return `
+    <div class="card">
+      <div class="sec-title">🎯 Prediction History</div>
+      <div class="sec-sub">Track record from Monday predictions</div>
+
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px">
+        <div class="stat-box">
+          <div class="stat-num">${totalCorrect}/${resolved.length}</div>
+          <div class="stat-lbl">All Time</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num" style="color:var(--gold)">⭐${totalStars}</div>
+          <div class="stat-lbl">Stars Earned</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num" style="color:var(--green)">${streak}🔥</div>
+          <div class="stat-lbl">Week Streak</div>
+        </div>
+      </div>
+
+      ${weeks.map(wk => {
+        const wPreds  = byWeek[wk];
+        const correct = wPreds.filter(p => p.correct).length;
+        const stars   = wPreds.reduce((s, p) => s + (p.stars_awarded ?? 0), 0);
+        const pct     = Math.round(correct / wPreds.length * 100);
+        return `
+          <div style="margin-bottom:12px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+              <span style="font-size:.8rem;font-weight:900">Week of ${wk}</span>
+              <span style="font-size:.78rem;font-weight:900;color:${pct>=50?'#10B981':'#EF4444'}">
+                ${correct}/${wPreds.length} correct · ⭐${stars}
+              </span>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:5px">
+              ${wPreds.map(p => `
+                <div style="display:flex;align-items:center;gap:5px;padding:5px 9px;border-radius:8px;font-size:.75rem;font-weight:800;background:${p.correct?'#D1FAE5':'#FEE2E2'};color:${p.correct?'#065F46':'#991B1B'}">
+                  ${p.emoji ?? '📈'} ${p.name ?? p.ticker} ${p.direction==='up'?'↑':'↓'} ${p.correct?'✅':'❌'}
+                </div>`).join('')}
+            </div>
+          </div>`;
+      }).join('')}
+    </div>`;
 }
 
 function holdingCard(h, price) {

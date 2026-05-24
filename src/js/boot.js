@@ -8,6 +8,8 @@ import { mountLab } from './screens/lab.js';
 import { mountWatchlist } from './screens/watchlist.js';
 import { mountPortfolio } from './screens/portfolio.js';
 import { mountParent } from './screens/parent.js';
+import { mountRivalry } from './screens/rivalry.js';
+import { mountChat } from './chat.js';
 
 export async function bootApp(session) {
   buildNav(session);
@@ -17,6 +19,9 @@ export async function bootApp(session) {
     clearSession();
     document.getElementById('nav-bar').classList.remove('show');
     document.getElementById('hud').classList.remove('show');
+    // Clean up chat panel
+    document.getElementById('chat-fab')?.remove();
+    document.getElementById('chat-panel')?.remove();
     await mountLogin();
     navigate('screen-login');
   };
@@ -27,5 +32,7 @@ export async function bootApp(session) {
   mountWatchlist(session);
   mountPortfolio(session);
   mountParent();
+  mountRivalry(session);
+  mountChat(session);
   navigate('screen-home');
 }
