@@ -50,6 +50,96 @@ const ADD_Q = [
 ];
 const ADD_EMOJIS = ['🏢','🍕','🏪','🎮','🚗','🍦','⚽','🎬','🏥','👗','📱','🎨','🏠','🍜','✈️','🎸'];
 
+const INDUSTRIES = [
+  { id:'tech',      label:'Technology',            emoji:'💻', bg:'#EEF2FF', accent:'#6366F1', tagline:'Apps, gadgets & the internet',
+    companies:[
+      { name:'Apple',              ticker:'AAPL',    emoji:'🍎', tag:'top',    desc:"Makes iPhone, iPad and Mac — one of the most valuable companies ever!" },
+      { name:'Microsoft',          ticker:'MSFT',    emoji:'🪟', tag:'top',    desc:"Runs Windows, Xbox and Office. Also a huge player in AI." },
+      { name:'NVIDIA',             ticker:'NVDA',    emoji:'⚡', tag:'rising', desc:"Makes chips that power AI and gaming. Massive growth in recent years!" },
+      { name:'Alphabet',           ticker:'GOOGL',   emoji:'🔍', tag:'top',    desc:"Google's parent — owns Search, YouTube, Maps and Android." },
+      { name:'Meta',               ticker:'META',    emoji:'📱', tag:'top',    desc:"Owns Facebook, Instagram and WhatsApp. Billions of daily users." },
+      { name:'Atlassian',          ticker:'TEAM',    emoji:'🦘', tag:'aussie', desc:"Aussie software company used by millions of businesses worldwide!" },
+      { name:'Tesla',              ticker:'TSLA',    emoji:'🚗', tag:'rising', desc:"Electric cars, solar energy and AI robots — the future of transport." },
+      { name:'Amazon',             ticker:'AMZN',    emoji:'🛒', tag:'top',    desc:"Online shopping giant that also runs AWS, the world's biggest cloud." },
+      { name:'WiseTech Global',    ticker:'WTC.AX',  emoji:'📦', tag:'aussie', desc:"Aussie company making software for global shipping and logistics." },
+      { name:'Xero',               ticker:'XRO.AX',  emoji:'💸', tag:'aussie', desc:"NZ/Aussie accounting software loved by small businesses everywhere." },
+    ]},
+  { id:'food',      label:'Food & Drink',           emoji:'🍔', bg:'#FEF3C7', accent:'#F59E0B', tagline:'Restaurants, groceries & snacks',
+    companies:[
+      { name:"McDonald's",         ticker:'MCD',     emoji:'🍟', tag:'top',    desc:"World's biggest fast food chain — over 40,000 restaurants globally!" },
+      { name:"Domino's",           ticker:'DMP.AX',  emoji:'🍕', tag:'aussie', desc:"Pizza delivery giant listed in Australia — 3,000+ stores across Asia Pacific." },
+      { name:'Coca-Cola',          ticker:'KO',      emoji:'🥤', tag:'top',    desc:"The world's most famous drink brand, sold in almost every country." },
+      { name:'Woolworths',         ticker:'WOW.AX',  emoji:'🛒', tag:'aussie', desc:"Australia's biggest supermarket chain with stores in every state." },
+      { name:'Coles',              ticker:'COL.AX',  emoji:'🏪', tag:'aussie', desc:"Australia's second-biggest supermarket, loved for its fresh food." },
+      { name:'Starbucks',          ticker:'SBUX',    emoji:'☕', tag:'top',    desc:"World's biggest coffee chain — 35,000+ stores worldwide." },
+      { name:'A2 Milk',            ticker:'A2M.AX',  emoji:'🥛', tag:'rising', desc:"Aussie/NZ company selling special A2 protein milk — big in China!" },
+      { name:'Wesfarmers',         ticker:'WES.AX',  emoji:'🔨', tag:'aussie', desc:"Aussie giant that owns Bunnings, Kmart, Target and Officeworks." },
+      { name:'Yum! Brands',        ticker:'YUM',     emoji:'🍗', tag:'top',    desc:"Owns KFC, Pizza Hut and Taco Bell — millions of restaurants worldwide." },
+      { name:'JB Hi-Fi',           ticker:'JBH.AX',  emoji:'📺', tag:'aussie', desc:"Australia's biggest electronics and entertainment retailer." },
+    ]},
+  { id:'gaming',    label:'Gaming & Entertainment', emoji:'🎮', bg:'#F0FDF4', accent:'#22C55E', tagline:'Games, movies & streaming',
+    companies:[
+      { name:'Netflix',            ticker:'NFLX',    emoji:'🎬', tag:'top',    desc:"World's biggest streaming service — 260+ million subscribers!" },
+      { name:'Nintendo',           ticker:'NTDOY',   emoji:'🕹️', tag:'top',    desc:"Makes Mario, Zelda and Pokémon — gaming's most loved company." },
+      { name:'Roblox',             ticker:'RBLX',    emoji:'🟥', tag:'rising', desc:"Gaming platform huge with kids — over 70 million daily players!" },
+      { name:'Electronic Arts',    ticker:'EA',      emoji:'⚽', tag:'top',    desc:"Makes EA Sports FC, The Sims, Apex Legends and Battlefield." },
+      { name:'Take-Two',           ticker:'TTWO',    emoji:'🎲', tag:'rising', desc:"Makes Grand Theft Auto — GTA VI is one of the most anticipated games ever." },
+      { name:'Walt Disney',        ticker:'DIS',     emoji:'🏰', tag:'top',    desc:"Owns Disney+, Marvel, Star Wars, Pixar and famous theme parks." },
+      { name:'Spotify',            ticker:'SPOT',    emoji:'🎵', tag:'rising', desc:"World's biggest music streaming app — 600+ million monthly users." },
+      { name:'REA Group',          ticker:'REA.AX',  emoji:'🏠', tag:'aussie', desc:"Owns realestate.com.au — Australians' favourite way to find a home." },
+    ]},
+  { id:'health',    label:'Healthcare',             emoji:'🏥', bg:'#FFF1F2', accent:'#F43F5E', tagline:'Medicines, hospitals & wellbeing',
+    companies:[
+      { name:'CSL',                ticker:'CSL.AX',  emoji:'💉', tag:'top',    desc:"Aussie biotech giant making blood products and vaccines worldwide." },
+      { name:'ResMed',             ticker:'RMD.AX',  emoji:'😴', tag:'top',    desc:"Aussie company making devices that help people breathe while they sleep." },
+      { name:'Johnson & Johnson',  ticker:'JNJ',     emoji:'🩹', tag:'top',    desc:"Makes Band-Aids, medicines and medical devices — trusted 130+ years." },
+      { name:'Pfizer',             ticker:'PFE',     emoji:'💊', tag:'top',    desc:"One of the world's biggest drug companies — made the COVID-19 vaccine." },
+      { name:'Cochlear',           ticker:'COH.AX',  emoji:'👂', tag:'aussie', desc:"Aussie company making bionic ears for deaf people worldwide!" },
+      { name:'Sonic Healthcare',   ticker:'SHL.AX',  emoji:'🔬', tag:'aussie', desc:"Aussie pathology company running medical labs in 8 countries." },
+      { name:'Ramsay Health',      ticker:'RHC.AX',  emoji:'🏥', tag:'aussie', desc:"Australia's biggest private hospital operator — 500+ hospitals worldwide." },
+      { name:'Moderna',            ticker:'MRNA',    emoji:'🧬', tag:'rising', desc:"Made the mRNA COVID vaccine — now working on cancer treatments!" },
+    ]},
+  { id:'transport', label:'Transport & Energy',     emoji:'🚀', bg:'#ECFEFF', accent:'#06B6D4', tagline:'Cars, planes, energy & space',
+    companies:[
+      { name:'Qantas',             ticker:'QAN.AX',  emoji:'✈️', tag:'aussie', desc:"Australia's national airline — flying since 1920." },
+      { name:'Uber',               ticker:'UBER',    emoji:'🚕', tag:'rising', desc:"Ride-sharing and food delivery app used in 70+ countries." },
+      { name:'Toyota',             ticker:'TM',      emoji:'🚗', tag:'top',    desc:"World's biggest car maker — famous for reliability and the Prius." },
+      { name:'Tesla',              ticker:'TSLA',    emoji:'⚡', tag:'rising', desc:"Electric cars, solar panels and AI robots — the future of transport." },
+      { name:'Woodside Energy',    ticker:'WDS.AX',  emoji:'⛽', tag:'aussie', desc:"Australia's biggest oil and gas company, moving into clean energy." },
+      { name:'AGL Energy',         ticker:'AGL.AX',  emoji:'💡', tag:'aussie', desc:"One of Australia's biggest power companies, transitioning to renewables." },
+      { name:'Lyft',               ticker:'LYFT',    emoji:'🛵', tag:'rising', desc:"Uber's main US competitor — also moving into autonomous vehicles." },
+      { name:'Virgin Australia',   ticker:'VAH.AX',  emoji:'💜', tag:'aussie', desc:"Australia's second airline, relaunched after Covid and growing again." },
+    ]},
+  { id:'mining',    label:'Mining & Resources',     emoji:'⛏️', bg:'#FFF7ED', accent:'#F97316', tagline:'Iron ore, gold, lithium & more',
+    companies:[
+      { name:'BHP',                ticker:'BHP.AX',  emoji:'⛏️', tag:'top',    desc:"Australia's biggest mining company — iron ore, copper and nickel." },
+      { name:'Rio Tinto',          ticker:'RIO.AX',  emoji:'🪨', tag:'top',    desc:"Global mining giant with huge iron ore mines in Western Australia." },
+      { name:'Fortescue',          ticker:'FMG.AX',  emoji:'🔩', tag:'aussie', desc:"Perth-based iron ore miner — Twiggy Forrest is also building green hydrogen." },
+      { name:'Newmont',            ticker:'NEM',     emoji:'🥇', tag:'top',    desc:"World's biggest gold miner — mines on every continent." },
+      { name:'Pilbara Minerals',   ticker:'PLS.AX',  emoji:'🔋', tag:'rising', desc:"Mines lithium in WA — essential for electric car batteries!" },
+      { name:'Mineral Resources',  ticker:'MIN.AX',  emoji:'💎', tag:'rising', desc:"Fast-growing Aussie miner focused on lithium and iron ore." },
+      { name:'South32',            ticker:'S32.AX',  emoji:'🌐', tag:'aussie', desc:"Spun out of BHP — mines aluminium, manganese and silver worldwide." },
+      { name:'Northern Star',      ticker:'NST.AX',  emoji:'⭐', tag:'rising', desc:"One of Australia's biggest gold miners, growing fast." },
+    ]},
+  { id:'banks',     label:'Banks & Finance',        emoji:'🏦', bg:'#F0F9FF', accent:'#0EA5E9', tagline:'Banks, insurance & fintech',
+    companies:[
+      { name:'Commonwealth Bank',  ticker:'CBA.AX',  emoji:'🏦', tag:'top',    desc:"Australia's biggest bank — used by over 17 million Australians." },
+      { name:'NAB',                ticker:'NAB.AX',  emoji:'💳', tag:'top',    desc:"National Australia Bank — one of the Big Four with 30,000+ staff." },
+      { name:'Westpac',            ticker:'WBC.AX',  emoji:'🐋', tag:'top',    desc:"Australia's oldest bank, founded in 1817 — one of the Big Four." },
+      { name:'ANZ',                ticker:'ANZ.AX',  emoji:'🌏', tag:'top',    desc:"Big Four bank with strong presence in New Zealand and Asia Pacific." },
+      { name:'Macquarie',          ticker:'MQG.AX',  emoji:'🦅', tag:'top',    desc:"Australia's global investment bank — known as the Millionaire Factory." },
+      { name:'Visa',               ticker:'V',       emoji:'💳', tag:'top',    desc:"Powers most card payments worldwide — over 4 billion cards issued." },
+      { name:'PayPal',             ticker:'PYPL',    emoji:'💸', tag:'top',    desc:"Pioneered online payments — used by 400+ million people globally." },
+      { name:'Block (Afterpay)',   ticker:'SQ',      emoji:'🔲', tag:'rising', desc:"Owns Afterpay — Australian buy-now-pay-later pioneer used worldwide." },
+    ]},
+];
+
+const TAG_META = {
+  top:    { label:'🌟 Top Performer', bg:'#D1FAE5', color:'#065F46' },
+  rising: { label:'🚀 Rising Star',   bg:'#EDE9FE', color:'#5B21B6' },
+  aussie: { label:'🦘 Aussie Star',   bg:'#FEF3C7', color:'#92400E' },
+};
+
 export function mountLab(session) {
   _session = session;
   _labCat  = 'all';
@@ -121,13 +211,15 @@ function doRenderLab() {
       <div class="rc-grid">
         ${filtered.length ? filtered.map(c => rcCard(c)).join('') : `<div style="grid-column:1/-1;color:#9CA3AF;text-align:center;padding:24px;font-weight:800">No companies in this category yet — complete more chapters to unlock!</div>`}
       </div>
-      <div style="margin-top:16px;padding-top:14px;border-top:2px solid #E0E7FF;text-align:center">
-        <button class="btn btn-outline" onclick="window.__goAddCompany()">🔍 Research Your Own Company</button>
-        <div style="font-size:.75rem;color:#9CA3AF;margin-top:6px">Know a great company not on this list? Rocky want to investigate!</div>
+      <div style="margin-top:16px;padding-top:14px;border-top:2px solid #E0E7FF;display:flex;flex-direction:column;gap:8px">
+        <button class="btn btn-primary btn-full" onclick="window.__goBrowse()">🏭 Browse by Industry</button>
+        <button class="btn btn-outline btn-full" onclick="window.__goAddCompany()">🔍 Research a Specific Company</button>
       </div>`}
     </div>`;
 
   window.__setLabCat    = k => { _labCat = k; doRenderLab(); };
+  window.__goBrowse     = () => renderSectorPicker();
+  window.__backToLab    = () => doRenderLab();
   window.__toggleLabOpen = id => { _labOpen[id] = !_labOpen[id]; doRenderLab(); };
   window.__toggleWatch  = async (ticker, name, emoji, sector, e) => {
     e?.stopPropagation();
@@ -153,10 +245,12 @@ function doRenderLab() {
 
 function renderCustomTab() {
   return `
-    <button class="btn btn-primary btn-full" style="margin-bottom:14px" onclick="window.__goAddCompany()">🔍 Research Your Own Company +</button>
+    <button class="btn btn-primary btn-full" style="margin-bottom:8px" onclick="window.__goBrowse()">🏭 Browse by Industry — find companies to research!</button>
+    <button class="btn btn-outline btn-full" style="margin-bottom:14px" onclick="window.__goAddCompany()">🔍 I know the company name →</button>
     ${_custom.length === 0
-      ? `<div style="text-align:center;padding:24px;color:#9CA3AF;font-weight:800">No custom companies yet!<br><span style="font-size:.8rem;font-weight:600">Click above to research any company you know!</span></div>`
-      : `<div class="rc-grid">${_custom.map(c => `
+      ? `<div style="text-align:center;padding:20px;color:#9CA3AF;font-weight:800;background:#F8FAFF;border-radius:14px">No researched companies yet!<br><span style="font-size:.8rem;font-weight:600">Tap Browse above to get started 👆</span></div>`
+      : `<div style="font-size:.75rem;font-weight:800;color:#6B7280;margin-bottom:8px">YOUR RESEARCHED COMPANIES</div>
+         <div class="rc-grid">${_custom.map(c => `
           <div style="position:relative">
             ${rcCard(c)}
             <button onclick="if(confirm('Remove ${c.name}?'))window.__deleteCustom('${c.id}')" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,.08);border:none;border-radius:6px;cursor:pointer;font-size:.7rem;padding:3px 7px;color:#6B7280;font-weight:800;z-index:10">✕</button>
@@ -437,7 +531,14 @@ async function renderAddCompany() {
 
       window.__retryResearch = () => renderAddCompany();
     }
-    window.__addBackToInfo = () => { _addState.step = 0; renderAddCompany(); };
+    window.__addBackToInfo = () => {
+      if (_addState.fromSector) {
+        renderSectorCompanies(_addState.fromSector, _addState.fromPage || 0);
+      } else {
+        _addState.step = 0;
+        renderAddCompany();
+      }
+    };
 
   } else {
     // STEP 2: Verdict
@@ -503,6 +604,103 @@ async function renderAddCompany() {
       doRenderLab();
     };
   }
+}
+
+// ── INDUSTRY BROWSER ─────────────────────────────────────────────────────────
+
+function renderSectorPicker() {
+  const el = document.getElementById('screen-lab');
+  el.innerHTML = `
+    <div class="card">
+      <div class="tutor-row">
+        <div class="tutor-emoji">🕷️</div>
+        <div class="bubble">
+          <div class="bubble-tag">Rocky 🪨</div>
+          Blurt! Pick an industry you find interesting — Rocky will show real companies with live data you can research!
+        </div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+      ${INDUSTRIES.map(s => `
+        <button onclick="window.__goBrowseSector('${s.id}')"
+          style="text-align:left;padding:16px 12px;border-radius:16px;border:2px solid ${s.accent}50;background:${s.bg};cursor:pointer;font-family:inherit;transition:transform .12s;display:block;width:100%"
+          onmousedown="this.style.transform='scale(.96)'" onmouseup="this.style.transform=''" ontouchend="this.style.transform=''">
+          <div style="font-size:1.8rem;margin-bottom:5px">${s.emoji}</div>
+          <div style="font-weight:900;font-size:.85rem;color:#1F2937;margin-bottom:2px">${s.label}</div>
+          <div style="font-size:.7rem;color:#6B7280;font-weight:600;line-height:1.3">${s.tagline}</div>
+          <div style="font-size:.65rem;font-weight:800;color:${s.accent};margin-top:6px">${s.companies.length} companies →</div>
+        </button>
+      `).join('')}
+    </div>
+    <button class="btn btn-outline btn-full" onclick="window.__backToLab()">← Back to Research Lab</button>`;
+
+  window.__goBrowseSector = id => renderSectorCompanies(id, 0);
+}
+
+function renderSectorCompanies(sectorId, page) {
+  const el  = document.getElementById('screen-lab');
+  const sec = INDUSTRIES.find(s => s.id === sectorId);
+  if (!sec) return;
+
+  const start   = page * 5;
+  const shown   = sec.companies.slice(start, start + 5);
+  const hasMore = start + 5 < sec.companies.length;
+  const total   = sec.companies.length;
+
+  el.innerHTML = `
+    <div class="card">
+      <div class="tutor-row">
+        <div class="tutor-emoji">🕷️</div>
+        <div class="bubble">
+          <div class="bubble-tag">Rocky 🪨</div>
+          Here are <strong>${sec.label}</strong> companies! Tap <strong>Research</strong> and Rocky will fetch live market data — price, size, performance and what experts think!
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <button class="btn btn-outline btn-sm" onclick="window.__goBrowse()" style="padding:7px 14px;flex-shrink:0">← Industries</button>
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="font-size:1.5rem">${sec.emoji}</span>
+        <div>
+          <div style="font-weight:900;font-size:.92rem;color:#1F2937">${sec.label}</div>
+          <div style="font-size:.7rem;color:#6B7280;font-weight:600">${sec.tagline}</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:12px">
+      ${shown.map((co, idx) => {
+        const tag = TAG_META[co.tag] || TAG_META.top;
+        const safeN = co.name.replace(/'/g, "\\'");
+        return `
+        <div style="background:white;border-radius:16px;border:2px solid #E0E7FF;padding:14px;display:flex;align-items:center;gap:12px">
+          <div style="font-size:1.8rem;width:46px;height:46px;display:flex;align-items:center;justify-content:center;background:#F8FAFF;border-radius:12px;flex-shrink:0">${co.emoji}</div>
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap;margin-bottom:1px">
+              <span style="font-weight:900;font-size:.88rem;color:#1F2937">${co.name}</span>
+              <span style="font-size:.58rem;font-weight:800;padding:2px 6px;border-radius:20px;background:${tag.bg};color:${tag.color};white-space:nowrap">${tag.label}</span>
+            </div>
+            <div style="font-size:.68rem;color:#9CA3AF;font-weight:800;letter-spacing:.03em;margin-bottom:3px">${co.ticker}</div>
+            <div style="font-size:.76rem;color:#4B5563;font-weight:600;line-height:1.4">${co.desc}</div>
+          </div>
+          <button onclick="window.__researchFromBrowse('${co.ticker}','${safeN}','${co.emoji}','${sectorId}',${page})"
+            class="btn btn-primary btn-sm" style="white-space:nowrap;flex-shrink:0;align-self:center;padding:9px 13px">🔬 Research</button>
+        </div>`;
+      }).join('')}
+    </div>
+
+    ${hasMore
+      ? `<button class="btn btn-outline btn-full" onclick="window.__goBrowsePage('${sectorId}',${page+1})">Show 5 more ${sec.label} companies →</button>`
+      : `<div style="text-align:center;font-size:.78rem;color:#9CA3AF;font-weight:700;padding:6px 0 10px">All ${total} ${sec.label} companies shown!</div>
+         ${page > 0 ? `<button class="btn btn-outline btn-full" onclick="window.__goBrowsePage('${sectorId}',0)">↑ Back to top</button>` : ''}`}
+    <button class="btn btn-outline btn-full" style="margin-top:8px" onclick="window.__goBrowse()">← All Industries</button>`;
+
+  window.__goBrowsePage        = (id, pg) => renderSectorCompanies(id, pg);
+  window.__researchFromBrowse  = (ticker, name, emoji, sid, pg) => {
+    _addState = { step: 1, name, ticker, emoji, answers: Array(ADD_Q.length).fill(null), fromSector: sid, fromPage: pg };
+    renderAddCompany();
+  };
 }
 
 function applyAnswer(i, val) {
